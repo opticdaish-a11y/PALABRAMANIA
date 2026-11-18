@@ -1,199 +1,257 @@
-// js/bundle.js - Motor Casual Móvil con Cápsulas SVG, Aventura, Modo Clásico Al Azar, Multijugador y Ranking
+// js/bundle.js - Motor Full-Screen Móvil con Tablero Rectangular Dinámico, Desafío Diario, Blitz, Misterio, Aventura (2 Mundos), Fondos y Música
 
 (function () {
     'use strict';
 
     // ==========================================
-    // 1. BANCO DE NIVELES DEL MODO AVENTURA
+    // 1. CONSTANTES, FONDOS Y BANCO DE NIVELES
     // ==========================================
     const SPANISH_LETTER_FREQUENCY = 'AAAAAAAAAEEEEEEEEEEIIIIIIOOOOOOOUUUUUUBBCDDEEEFFGGHHIIJKLLLMNNNÑÑOOOPQRRRSSSTTTUVXYZ';
 
     const PASTEL_CAPSULE_COLORS = [
-        '#5eead4', // Turquesa menta
-        '#fca5a5', // Salmón coral
-        '#86efac', // Verde lima suave
-        '#f0abfc', // Lavanda rosa
-        '#a5b4fc', // Índigo pastel
-        '#fde047', // Amarillo cálido
-        '#fdba74', // Naranja melocotón
+        '#5eead4', // Turquesa
+        '#fca5a5', // Coral
+        '#86efac', // Lima
+        '#f0abfc', // Lavanda
+        '#a5b4fc', // Índigo
+        '#fde047', // Amarillo
+        '#fdba74', // Melocotón
         '#93c5fd'  // Azul cielo
     ];
 
+    const BG_THEMES = {
+        montanas: {
+            name: 'Montañas',
+            url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80'
+        },
+        hojas: {
+            name: 'Hojas Rocío',
+            url: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1200&auto=format&fit=crop&q=80'
+        },
+        atardecer: {
+            name: 'Atardecer',
+            url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=1200&auto=format&fit=crop&q=80'
+        },
+        playa: {
+            name: 'Playa',
+            url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop&q=80'
+        },
+        cerezos: {
+            name: 'Cerezos',
+            url: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=1200&auto=format&fit=crop&q=80'
+        },
+        aurora: {
+            name: 'Aurora',
+            url: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1200&auto=format&fit=crop&q=80'
+        }
+    };
+
+    const DAILY_QUOTES = [
+        {
+            author: 'GABRIEL CELAYA',
+            template: '"La {POESIA} es un {ARMA} cargada de {FUTURO}, una {LLAVE} para {CONSTRUIR} {PUENTES}."',
+            words: ['POESIA', 'ARMA', 'FUTURO', 'LLAVE', 'CONSTRUIR', 'PUENTES']
+        },
+        {
+            author: 'MIGUEL DE CERVANTES',
+            template: '"El que {LEE} mucho y {ANDA} mucho, {MIRA} mucho y {SABE} de {VERDAD} la {VIDA}."',
+            words: ['LEE', 'ANDA', 'MIRA', 'SABE', 'VERDAD', 'VIDA']
+        },
+        {
+            author: 'PABLO NERUDA',
+            template: '"Podrán {CORTAR} todas las {FLORES}, pero no podrán {DETENER} jamás la {PRIMAVERA}."',
+            words: ['CORTAR', 'FLORES', 'DETENER', 'PRIMAVERA', 'CAMPO', 'AROMA']
+        },
+        {
+            author: 'GABRIEL GARCÍA MÁRQUEZ',
+            template: '"La {VIDA} no es la que uno {VIVIO}, sino la que {RECUERDA} para {CONTAR} su {HISTORIA}."',
+            words: ['VIDA', 'VIVIO', 'RECUERDA', 'CONTAR', 'HISTORIA', 'TIEMPO']
+        },
+        {
+            author: 'FRIDA KAHLO',
+            template: '"Pies, para qué los {QUIERO} si tengo {ALAS} para {VOLAR} hacia un {MUNDO} de {COLOR}."',
+            words: ['QUIERO', 'ALAS', 'VOLAR', 'MUNDO', 'COLOR', 'SUENO']
+        },
+        {
+            author: 'ANTONIO MACHADO',
+            template: '"Caminante, no hay {CAMINO}, se hace {CAMINO} al {ANDAR} sobre el {MAR} y la {TIERRA}."',
+            words: ['CAMINO', 'ANDAR', 'MAR', 'TIERRA', 'PASO', 'HUELLA']
+        },
+        {
+            author: 'JORGE LUIS BORGES',
+            template: '"Siempre {IMAGINE} que el {PARAISO} sería algún {TIPO} de gran {REINO} con {LIBROS} y {LETRAS}."',
+            words: ['IMAGINE', 'PARAISO', 'TIPO', 'REINO', 'LIBROS', 'LETRAS']
+        },
+        {
+            author: 'OCTAVIO PAZ',
+            template: '"La {PALABRA} es el {PUENTE} entre el {SILENCIO} del {ALMA} y la {LUZ} del {MUNDO}."',
+            words: ['PALABRA', 'PUENTE', 'SILENCIO', 'ALMA', 'LUZ', 'MUNDO']
+        },
+        {
+            author: 'MARIO BENEDETTI',
+            template: '"Cuando {CREIAMOS} tener todas las {CLAVES}, cambiaron las {PREGUNTAS} del {JUEGO}."',
+            words: ['CREIAMOS', 'CLAVES', 'PREGUNTAS', 'JUEGO', 'MENTE', 'RETO']
+        },
+        {
+            author: 'JULIO CORTÁZAR',
+            template: '"Andábamos sin {BUSCAR} pero {SABIENDO} que {ANDABAMOS} para {ENCONTRAR} la {MAGIA}."',
+            words: ['BUSCAR', 'SABIENDO', 'ANDABAMOS', 'ENCONTRAR', 'MAGIA', 'AZAR']
+        }
+    ];
+
     const ADVENTURE_LEVELS = [
+        // MUNDO 1: EXPEDICIÓN SALVAJE
         {
-            id: 1,
-            title: "El Rey de la Sabana",
-            biome: "Sabana Africana",
-            words: ["LEON", "MELENA", "RUGIDO", "SABANA", "CAZA", "MANADA"],
-            difficulty: "facil",
+            id: 1, world: 'Mundo 1: Expedición Salvaje', title: "El Rey de la Sabana", biome: "Sabana Africana",
+            words: ["LEON", "MELENA", "RUGIDO", "SABANA", "CAZA", "MANADA"], difficulty: "facil",
             reward: {
-                id: "card_leon",
-                name: "León Africano",
-                scientific: "Panthera leo",
-                rarity: "Raro",
-                rarityColor: "#3b82f6",
+                id: "card_leon", name: "León Africano", scientific: "Panthera leo", rarity: "Raro", rarityColor: "#3b82f6",
                 image: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=800&auto=format&fit=crop&q=80",
-                context: "Conocido como el Rey de la Selva, es el único felino que vive en manadas familiares. Su rugido se escucha a más de 8 km.",
-                basePoints: 600
+                context: "Conocido como el Rey de la Selva, es el único felino que vive en manadas familiares. Su rugido se escucha a más de 8 km.", basePoints: 250
             }
         },
         {
-            id: 2,
-            title: "Guardianes de la Selva",
-            biome: "Selva Tropical",
-            words: ["TIGRE", "RAYAS", "SELVA", "GARRA", "SIGILO", "AGIL"],
-            difficulty: "facil",
+            id: 2, world: 'Mundo 1: Expedición Salvaje', title: "Guardianes de la Selva", biome: "Selva Tropical",
+            words: ["TIGRE", "RAYAS", "SELVA", "GARRA", "SIGILO", "AGIL"], difficulty: "facil",
             reward: {
-                id: "card_tigre",
-                name: "Tigre de Bengala",
-                scientific: "Panthera tigris",
-                rarity: "Épico",
-                rarityColor: "#8b5cf6",
+                id: "card_tigre", name: "Tigre de Bengala", scientific: "Panthera tigris", rarity: "Épico", rarityColor: "#8b5cf6",
                 image: "https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=800&auto=format&fit=crop&q=80",
-                context: "Excelente nadador y cazador solitario. Sus rayas son únicas en cada individuo, como las huellas dactilares humanas.",
-                basePoints: 750
+                context: "Excelente nadador y cazador solitario. Sus rayas son únicas en cada individuo, como las huellas dactilares humanas.", basePoints: 300
             }
         },
         {
-            id: 3,
-            title: "Gigantes Nobles",
-            biome: "Planicie Africana",
-            words: ["ELEFANTE", "TROMPA", "MARFIL", "MEMORIA", "OREJAS", "GIGANTE", "AGUA"],
-            difficulty: "medio",
+            id: 3, world: 'Mundo 1: Expedición Salvaje', title: "Gigantes Nobles", biome: "Planicie Africana",
+            words: ["ELEFANTE", "TROMPA", "MARFIL", "MEMORIA", "OREJAS", "GIGANTE", "AGUA"], difficulty: "medio",
             reward: {
-                id: "card_elefante",
-                name: "Elefante de la Sabana",
-                scientific: "Loxodonta africana",
-                rarity: "Raro",
-                rarityColor: "#3b82f6",
+                id: "card_elefante", name: "Elefante de la Sabana", scientific: "Loxodonta africana", rarity: "Raro", rarityColor: "#3b82f6",
                 image: "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=800&auto=format&fit=crop&q=80",
-                context: "Memoria prodigiosa capaz de recordar rutas de agua durante décadas. Su trompa tiene más de 40.000 músculos.",
-                basePoints: 900
+                context: "Memoria prodigiosa capaz de recordar rutas de agua durante décadas. Su trompa tiene más de 40.000 músculos.", basePoints: 350
             }
         },
         {
-            id: 4,
-            title: "Señores del Cielo",
-            biome: "Cumbres Rocosas",
-            words: ["AGUILA", "PLUMAS", "VUELO", "NIDO", "PICO", "GARRA", "ALTURA"],
-            difficulty: "medio",
+            id: 4, world: 'Mundo 1: Expedición Salvaje', title: "Señores del Cielo", biome: "Cumbres Rocosas",
+            words: ["AGUILA", "PLUMAS", "VUELO", "NIDO", "PICO", "GARRA", "ALTURA"], difficulty: "medio",
             reward: {
-                id: "card_aguila",
-                name: "Águila Real",
-                scientific: "Aquila chrysaetos",
-                rarity: "Épico",
-                rarityColor: "#8b5cf6",
+                id: "card_aguila", name: "Águila Real", scientific: "Aquila chrysaetos", rarity: "Épico", rarityColor: "#8b5cf6",
                 image: "https://images.unsplash.com/photo-1611689342806-0863700ce1e4?w=800&auto=format&fit=crop&q=80",
-                context: "Puede divisar presas a más de 3 km de distancia mientras planea. Al descender en picado supera los 240 km/h.",
-                basePoints: 1050
+                context: "Puede divisar presas a más de 3 km de distancia mientras planea. Al descender en picado supera los 240 km/h.", basePoints: 400
             }
         },
         {
-            id: 5,
-            title: "Océano Inteligente",
-            biome: "Mar Abierto",
-            words: ["DELFIN", "OCEANO", "ECO", "SALTO", "ALETA", "SONAR", "CORAL", "AZUL"],
-            difficulty: "medio",
+            id: 5, world: 'Mundo 1: Expedición Salvaje', title: "Océano Inteligente", biome: "Mar Abierto",
+            words: ["DELFIN", "OCEANO", "ECO", "SALTO", "ALETA", "SONAR", "CORAL", "AZUL"], difficulty: "medio",
             reward: {
-                id: "card_delfin",
-                name: "Delfín Mular",
-                scientific: "Tursiops truncatus",
-                rarity: "Raro",
-                rarityColor: "#3b82f6",
+                id: "card_delfin", name: "Delfín Mular", scientific: "Tursiops truncatus", rarity: "Raro", rarityColor: "#3b82f6",
                 image: "https://images.unsplash.com/photo-1570481662006-a3a1374699e8?w=800&auto=format&fit=crop&q=80",
-                context: "Utilizan ecolocalización de alta precisión para 'ver' bajo el agua mediante el sonido. Duermen con un hemisferio cerebral a la vez.",
-                basePoints: 1200
+                context: "Utilizan ecolocalización de alta precisión para 'ver' bajo el agua mediante el sonido. Duermen con un hemisferio cerebral a la vez.", basePoints: 450
             }
         },
         {
-            id: 6,
-            title: "Espíritu de la Nieve",
-            biome: "Bosque Boreal",
-            words: ["LOBO", "AULLIDO", "BOSQUE", "ALFA", "NIEVE", "MANADA", "NOCHE", "LUNA"],
-            difficulty: "medio",
+            id: 6, world: 'Mundo 1: Expedición Salvaje', title: "Espíritu de la Nieve", biome: "Bosque Boreal",
+            words: ["LOBO", "AULLIDO", "BOSQUE", "ALFA", "NIEVE", "MANADA", "NOCHE", "LUNA"], difficulty: "medio",
             reward: {
-                id: "card_lobo",
-                name: "Lobo Ártico",
-                scientific: "Canis lupus arctos",
-                rarity: "Épico",
-                rarityColor: "#8b5cf6",
+                id: "card_lobo", name: "Lobo Ártico", scientific: "Canis lupus arctos", rarity: "Épico", rarityColor: "#8b5cf6",
                 image: "https://images.unsplash.com/photo-1564865878688-9a244444042a?w=800&auto=format&fit=crop&q=80",
-                context: "Sobrevive a temperaturas de hasta -50 °C. Su aullido sirve para cohesionar la manada y marcar territorio en la tundra helada.",
-                basePoints: 1350
+                context: "Sobrevive a temperaturas de hasta -50 °C. Su aullido sirve para cohesionar la manada y marcar territorio en la tundra.", basePoints: 500
             }
         },
         {
-            id: 7,
-            title: "El Pacifista de Bambú",
-            biome: "Montañas de Niebla",
-            words: ["PANDA", "BAMBU", "CHINA", "OSO", "BLANCO", "NEGRO", "BOSQUE", "RAMA"],
-            difficulty: "dificil",
+            id: 7, world: 'Mundo 1: Expedición Salvaje', title: "El Pacifista de Bambú", biome: "Montañas de Niebla",
+            words: ["PANDA", "BAMBU", "CHINA", "OSO", "BLANCO", "NEGRO", "BOSQUE", "RAMA"], difficulty: "dificil",
             reward: {
-                id: "card_panda",
-                name: "Oso Panda Gigante",
-                scientific: "Ailuropoda melanoleuca",
-                rarity: "Legendario",
-                rarityColor: "#f59e0b",
+                id: "card_panda", name: "Oso Panda Gigante", scientific: "Ailuropoda melanoleuca", rarity: "Legendario", rarityColor: "#f59e0b",
                 image: "https://images.unsplash.com/photo-1527118732049-c88155f2107c?w=800&auto=format&fit=crop&q=80",
-                context: "Pasa de 12 a 16 horas diarias comiendo bambú. Posee un 'falso pulgar' que le ayuda a sostener los tallos con destreza.",
-                basePoints: 1500
+                context: "Pasa de 12 a 16 horas diarias comiendo bambú. Posee un 'falso pulgar' que le ayuda a sostener los tallos con destreza.", basePoints: 600
             }
         },
         {
-            id: 8,
-            title: "El Leviatán del Abismo",
-            biome: "Gran Fosa Marina",
-            words: ["BALLENA", "AZUL", "MARES", "CANTO", "GIGANTE", "ABISMO", "KRILL", "PROFUNDO", "PULMON"],
-            difficulty: "dificil",
+            id: 8, world: 'Mundo 1: Expedición Salvaje', title: "El Leviatán del Abismo", biome: "Gran Fosa Marina",
+            words: ["BALLENA", "AZUL", "MARES", "CANTO", "GIGANTE", "ABISMO", "KRILL", "PROFUNDO"], difficulty: "dificil",
             reward: {
-                id: "card_ballena",
-                name: "Ballena Azul",
-                scientific: "Balaenoptera musculus",
-                rarity: "Legendario",
-                rarityColor: "#f59e0b",
+                id: "card_ballena", name: "Ballena Azul", scientific: "Balaenoptera musculus", rarity: "Legendario", rarityColor: "#f59e0b",
                 image: "https://images.unsplash.com/photo-1568430462989-44163eb1752f?w=800&auto=format&fit=crop&q=80",
-                context: "Su corazón es del tamaño de un coche pequeño y su lengua pesa tanto como un elefante. Su canto viaja cientos de kilómetros.",
-                basePoints: 2000
+                context: "Su corazón es del tamaño de un coche pequeño y su lengua pesa tanto como un elefante. Su canto viaja cientos de kilómetros.", basePoints: 700
+            }
+        },
+        // MUNDO 2: MARAVILLAS DEL PLANETA
+        {
+            id: 9, world: 'Mundo 2: Maravillas del Planeta', title: "El Gran Cañón", biome: "Arizona, EE.UU.",
+            words: ["CANON", "ROCA", "RIO", "DESIERTO", "VALLE", "ROJO", "SOL", "ABISMO"], difficulty: "medio",
+            reward: {
+                id: "card_canon", name: "Gran Cañón", scientific: "Garganta del Colorado", rarity: "Épico", rarityColor: "#8b5cf6",
+                image: "https://images.unsplash.com/photo-1474044159687-1ee9f3a51722?w=800&auto=format&fit=crop&q=80",
+                context: "Esculpido por el río Colorado durante millones de años, expone casi 2.000 millones de años de historia geológica de la Tierra.", basePoints: 750
+            }
+        },
+        {
+            id: 10, world: 'Mundo 2: Maravillas del Planeta', title: "Luces del Polo Norte", biome: "Islandia",
+            words: ["AURORA", "HIELO", "POLO", "NOCHE", "VERDE", "CIELO", "FRIO", "ESTRELLA"], difficulty: "medio",
+            reward: {
+                id: "card_aurora", name: "Aurora Boreal", scientific: "Fenómeno Solar", rarity: "Legendario", rarityColor: "#f59e0b",
+                image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&auto=format&fit=crop&q=80",
+                context: "Cortinas luminosas provocadas por partículas solares que chocan contra el campo magnético terrestre en las regiones polares.", basePoints: 800
+            }
+        },
+        {
+            id: 11, world: 'Mundo 2: Maravillas del Planeta', title: "Jardín Submarino", biome: "Australia",
+            words: ["CORAL", "ARRECIFE", "PEZ", "TURQUESA", "ISLA", "MAR", "TROPICO", "VIDA"], difficulty: "dificil",
+            reward: {
+                id: "card_coral", name: "Gran Barrera de Coral", scientific: "Ecosistema Marino", rarity: "Épico", rarityColor: "#8b5cf6",
+                image: "https://images.unsplash.com/photo-1546026423-cc4642628d2b?w=800&auto=format&fit=crop&q=80",
+                context: "El arrecife más grande del planeta, con más de 2.300 km de longitud. Es la única estructura viva visible desde el espacio.", basePoints: 900
+            }
+        },
+        {
+            id: 12, world: 'Mundo 2: Maravillas del Planeta', title: "La Cumbre Sagrada", biome: "Japón",
+            words: ["FUJI", "MONTE", "VOLCAN", "NIEVE", "CEREZO", "JAPON", "NUBE", "PAZ"], difficulty: "dificil",
+            reward: {
+                id: "card_fuji", name: "Monte Fuji", scientific: "Estratovolcán (3.776 m)", rarity: "Legendario", rarityColor: "#f59e0b",
+                image: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=800&auto=format&fit=crop&q=80",
+                context: "Cono volcánico casi perfectamente simétrico cubierto de nieve gran parte del año; símbolo sagrado de la cultura japonesa.", basePoints: 1200
             }
         }
     ];
 
-    // ==========================================
-    // 2. CATEGORÍAS MODO CLÁSICO (100% AL AZAR)
-    // ==========================================
     const CLASSIC_CATEGORIES = {
-        animales: {
-            id: 'animales', name: 'Reino Animal', icon: '🦁',
-            words: ['LEON', 'TIGRE', 'ELEFANTE', 'JIRAFA', 'DELFIN', 'BALLENA', 'AGUILA', 'HALCON', 'PINGUINO', 'CANGURO', 'KOALA', 'LEOPARDO', 'PANDA', 'CEBRA', 'CAMALEON', 'COLIBRI', 'LOBO', 'ZORRO', 'JAGUAR', 'TORTUGA', 'RINOCERONTE', 'HIPOPOTAMO', 'COCODRILO', 'PANTERA', 'FLAMENCO', 'GORILA']
-        },
-        paises: {
-            id: 'paises', name: 'Países del Mundo', icon: '🌎',
-            words: ['MEXICO', 'ESPANA', 'ARGENTINA', 'COLOMBIA', 'CHILE', 'PERU', 'BRASIL', 'CANADA', 'FRANCIA', 'ITALIA', 'ALEMANIA', 'JAPON', 'AUSTRALIA', 'PORTUGAL', 'URUGUAY', 'ECUADOR', 'GRECIA', 'EGIPTO', 'SUIZA', 'NORUEGA', 'SUECIA', 'HOLANDA', 'TURQUIA', 'FINLANDIA']
-        },
-        tecnologia: {
-            id: 'tecnologia', name: 'Mundo Tech', icon: '💻',
-            words: ['ALGORITMO', 'INTERNET', 'ROBOT', 'SATELITE', 'SOFTWARE', 'HARDWARE', 'CODIGO', 'PROGRAMA', 'DATOS', 'SERVIDOR', 'PANTALLA', 'CELULAR', 'NUBE', 'DATABASE', 'CONEXION', 'PROCESADOR', 'MEMORIA', 'SISTEMA', 'TECLADO', 'ROUTER', 'BITCOIN', 'ARCHIVO']
-        },
-        gastronomia: {
-            id: 'gastronomia', name: 'Gastronomía', icon: '🍕',
-            words: ['MANZANA', 'PLATANO', 'FRESA', 'NARANJA', 'AGUACATE', 'SANDIA', 'CEREZA', 'CHOCOLATE', 'PIZZA', 'PASTA', 'BURGUER', 'TACO', 'MANGO', 'LIMON', 'VAINILLA', 'CANELA', 'GALLETA', 'QUESO', 'PIÑA', 'PASTEL', 'HELADO', 'SUSHI', 'ARROZ', 'PAN', 'TORTILLA']
-        },
-        deportes: {
-            id: 'deportes', name: 'Deportes', icon: '⚽',
-            words: ['FUTBOL', 'BASKET', 'NATACION', 'CICLISMO', 'TENIS', 'VOLEIBOL', 'ATLETISMO', 'BOXEO', 'KARATE', 'BEISBOL', 'GOLF', 'PATINAJE', 'ESQUI', 'RUGBY', 'GIMNASIA', 'AJEDREZ', 'SURF', 'MARATON', 'REMO', 'ESGRIMA', 'HOCKEY', 'JUDO']
-        },
-        universo: {
-            id: 'universo', name: 'Cosmos', icon: '🚀',
-            words: ['GALAXIA', 'PLANETA', 'ESTRELLA', 'COMETA', 'ASTEROIDE', 'ORBITA', 'GRAVEDAD', 'TELESCOPIO', 'ASTRONAUTA', 'MARTE', 'JUPITER', 'SATURNO', 'NEBULOSA', 'LUNA', 'SOL', 'ECLIPSE', 'COSMOS', 'UNIVERSO', 'METEORITO', 'SUPERNOVA']
-        }
+        animales: { id: 'animales', name: 'Reino Animal', icon: '🦁', words: ['LEON', 'TIGRE', 'ELEFANTE', 'JIRAFA', 'DELFIN', 'BALLENA', 'AGUILA', 'HALCON', 'PINGUINO', 'CANGURO', 'KOALA', 'LEOPARDO', 'PANDA', 'CEBRA', 'CAMALEON', 'COLIBRI', 'LOBO', 'ZORRO', 'JAGUAR', 'TORTUGA', 'PANTERA', 'GORILA'] },
+        paises: { id: 'paises', name: 'Países', icon: '🌎', words: ['MEXICO', 'ESPANA', 'ARGENTINA', 'COLOMBIA', 'CHILE', 'PERU', 'BRASIL', 'CANADA', 'FRANCIA', 'ITALIA', 'ALEMANIA', 'JAPON', 'AUSTRALIA', 'PORTUGAL', 'URUGUAY', 'ECUADOR', 'GRECIA', 'EGIPTO', 'SUIZA', 'NORUEGA', 'SUECIA'] },
+        tecnologia: { id: 'tecnologia', name: 'Mundo Tech', icon: '💻', words: ['ALGORITMO', 'INTERNET', 'ROBOT', 'SATELITE', 'SOFTWARE', 'HARDWARE', 'CODIGO', 'PROGRAMA', 'DATOS', 'SERVIDOR', 'PANTALLA', 'CELULAR', 'NUBE', 'DATABASE', 'CONEXION', 'MEMORIA', 'SISTEMA', 'TECLADO', 'ROUTER', 'ARCHIVO'] },
+        gastronomia: { id: 'gastronomia', name: 'Gastronomía', icon: '🍕', words: ['MANZANA', 'PLATANO', 'FRESA', 'NARANJA', 'AGUACATE', 'SANDIA', 'CEREZA', 'CHOCOLATE', 'PIZZA', 'PASTA', 'BURGUER', 'TACO', 'MANGO', 'LIMON', 'VAINILLA', 'CANELA', 'GALLETA', 'QUESO', 'PIÑA', 'PASTEL', 'HELADO', 'SUSHI'] },
+        deportes: { id: 'deportes', name: 'Deportes', icon: '⚽', words: ['FUTBOL', 'BASKET', 'NATACION', 'CICLISMO', 'TENIS', 'VOLEIBOL', 'ATLETISMO', 'BOXEO', 'KARATE', 'BEISBOL', 'GOLF', 'PATINAJE', 'ESQUI', 'RUGBY', 'GIMNASIA', 'AJEDREZ', 'SURF', 'MARATON', 'REMO', 'HOCKEY', 'JUDO'] },
+        universo: { id: 'universo', name: 'Cosmos', icon: '🚀', words: ['GALAXIA', 'PLANETA', 'ESTRELLA', 'COMETA', 'ASTEROIDE', 'ORBITA', 'GRAVEDAD', 'ASTRONAUTA', 'MARTE', 'JUPITER', 'SATURNO', 'NEBULOSA', 'LUNA', 'SOL', 'ECLIPSE', 'COSMOS', 'UNIVERSO', 'METEORO'] }
     };
 
     function sanitizeWord(w) {
         return w.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-ZÑ]/g, '').trim();
     }
 
+    // Generador determinista para que el Desafío Diario sea único por fecha
+    function getTodayDateKey() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function hashString(str) {
+        let h = 2166136261 >>> 0;
+        for (let i = 0; i < str.length; i++) {
+            h ^= str.charCodeAt(i);
+            h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+    }
+
+    function createSeededRng(seed) {
+        let t = seed >>> 0;
+        return function () {
+            t += 0x6D2B79F5;
+            let r = Math.imul(t ^ (t >>> 15), 1 | t);
+            r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+            return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
     // ==========================================
-    // 3. SISTEMA DE AUDIO Y MÚSICA GENERATIVA (100% SIN COPYRIGHT)
+    // 2. SISTEMA DE AUDIO Y MÚSICA SIN COPYRIGHT
     // ==========================================
     class SoundEngine {
         constructor() {
@@ -214,14 +272,11 @@
                     this.setupMusicBus();
                 }
             }
-            if (this.ctx && this.ctx.state === 'suspended') {
-                this.ctx.resume();
-            }
+            if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
         }
 
         setupMusicBus() {
             if (!this.ctx || this.musicBus) return;
-            // Filtro cálido paso-bajos + eco suave tipo estudio
             const masterGain = this.ctx.createGain();
             masterGain.gain.value = 0.22;
 
@@ -254,9 +309,7 @@
             this.musicGenre = genre;
             localStorage.setItem('sopa_music_genre', genre);
             this.stopMusic();
-            if (genre !== 'off') {
-                this.startMusic();
-            }
+            if (genre !== 'off') this.startMusic();
         }
 
         startMusic() {
@@ -266,20 +319,14 @@
 
             this.isPlayingMusic = true;
             this.stepIndex = 0;
-
             const intervals = { piano: 750, relax: 2200, lofi: 620, aventura: 480 };
-            const ms = intervals[this.musicGenre] || 800;
-
             this.playMusicStep();
-            this.musicLoop = setInterval(() => this.playMusicStep(), ms);
+            this.musicLoop = setInterval(() => this.playMusicStep(), intervals[this.musicGenre] || 800);
         }
 
         stopMusic() {
             this.isPlayingMusic = false;
-            if (this.musicLoop) {
-                clearInterval(this.musicLoop);
-                this.musicLoop = null;
-            }
+            if (this.musicLoop) { clearInterval(this.musicLoop); this.musicLoop = null; }
         }
 
         playTone(freq, duration, type = 'sine', vol = 0.2, attack = 0.04) {
@@ -290,11 +337,9 @@
                 const gain = this.ctx.createGain();
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, now);
-
                 gain.gain.setValueAtTime(0.0001, now);
                 gain.gain.linearRampToValueAtTime(vol, now + attack);
                 gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
                 osc.connect(gain);
                 gain.connect(this.musicBus);
                 osc.start(now);
@@ -307,56 +352,35 @@
             const s = this.stepIndex++;
 
             if (this.musicGenre === 'piano') {
-                // Progresión Cmaj7 -> Am7 -> Fmaj7 -> G6 en arpegio suave
                 const chords = [
-                    [261.63, 329.63, 392.00, 493.88], // Cmaj7
-                    [220.00, 261.63, 329.63, 392.00], // Am7
-                    [174.61, 220.00, 261.63, 329.63], // Fmaj7
-                    [196.00, 246.94, 293.66, 329.63]  // G6
+                    [261.63, 329.63, 392.00, 493.88],
+                    [220.00, 261.63, 329.63, 392.00],
+                    [174.61, 220.00, 261.63, 329.63],
+                    [196.00, 246.94, 293.66, 329.63]
                 ];
                 const chord = chords[Math.floor(s / 4) % chords.length];
-                const note = chord[s % 4];
-                this.playTone(note, 1.8, 'triangle', 0.22, 0.03);
-                if (s % 4 === 0) {
-                    this.playTone(chord[0] / 2, 2.6, 'sine', 0.16, 0.08);
-                }
+                this.playTone(chord[s % 4], 1.8, 'triangle', 0.22, 0.03);
+                if (s % 4 === 0) this.playTone(chord[0] / 2, 2.6, 'sine', 0.16, 0.08);
             } else if (this.musicGenre === 'relax') {
-                // Pads ambientales lentos en Re Mayor Pentatónica
-                const pads = [
-                    [146.83, 220.00, 293.66, 369.99], // D
-                    [123.47, 185.00, 246.94, 293.66], // Bm
-                    [196.00, 246.94, 293.66, 369.99]  // Gmaj7
-                ];
-                const pad = pads[s % pads.length];
-                pad.forEach(f => this.playTone(f, 3.8, 'sine', 0.09, 0.8));
-                // Nota cristalina esporádica
+                const pads = [[146.83, 220, 293.66, 369.99], [123.47, 185, 246.94, 293.66], [196, 246.94, 293.66, 369.99]];
+                pads[s % pads.length].forEach(f => this.playTone(f, 3.8, 'sine', 0.09, 0.8));
                 const bells = [587.33, 739.99, 880.00, 1174.66];
                 this.playTone(bells[s % bells.length], 2.2, 'sine', 0.06, 0.1);
             } else if (this.musicGenre === 'lofi') {
-                // Acordes cálidos Rhodes + bajo suave
-                const lofiChords = [
-                    [174.61, 261.63, 329.63, 440.00], // Fmaj7
-                    [164.81, 246.94, 293.66, 392.00], // Em7
-                    [146.83, 220.00, 261.63, 349.23], // Dm7
-                    [130.81, 196.00, 246.94, 329.63]  // Cmaj7
-                ];
+                const lofiChords = [[174.61, 261.63, 329.63, 440], [164.81, 246.94, 293.66, 392], [146.83, 220, 261.63, 349.23], [130.81, 196, 246.94, 329.63]];
                 const c = lofiChords[Math.floor(s / 4) % lofiChords.length];
                 if (s % 4 === 0) {
                     c.forEach(f => this.playTone(f, 2.1, 'sine', 0.10, 0.05));
                     this.playTone(c[0] / 2, 1.8, 'triangle', 0.18, 0.04);
                 } else if (s % 2 === 1) {
-                    const melody = [523.25, 587.33, 659.25, 440.00];
-                    this.playTone(melody[s % melody.length], 0.7, 'sine', 0.10, 0.02);
+                    const mel = [523.25, 587.33, 659.25, 440.00];
+                    this.playTone(mel[s % mel.length], 0.7, 'sine', 0.10, 0.02);
                 }
             } else if (this.musicGenre === 'aventura') {
-                // Melodía alegre estilo marimba / kalimba en Sol Mayor Pentatónica
-                const scale = [392.00, 440.00, 493.88, 587.33, 659.25, 783.99];
+                const scale = [392, 440, 493.88, 587.33, 659.25, 783.99];
                 const pattern = [0, 2, 3, 5, 4, 3, 2, 1];
-                const note = scale[pattern[s % pattern.length]];
-                this.playTone(note, 0.45, 'triangle', 0.22, 0.01);
-                if (s % 4 === 0) {
-                    this.playTone(196.00, 0.9, 'sine', 0.18, 0.02);
-                }
+                this.playTone(scale[pattern[s % pattern.length]], 0.45, 'triangle', 0.22, 0.01);
+                if (s % 4 === 0) this.playTone(196, 0.9, 'sine', 0.18, 0.02);
             }
         }
 
@@ -365,18 +389,10 @@
             this.init();
             if (!this.ctx) return;
             try {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                const now = this.ctx.currentTime;
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(540, now);
-                osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
-                gain.gain.setValueAtTime(0.05, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.04);
+                const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), now = this.ctx.currentTime;
+                osc.type = 'sine'; osc.frequency.setValueAtTime(540, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
+                gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.start(now); osc.stop(now + 0.04);
             } catch (e) {}
         }
 
@@ -387,17 +403,10 @@
             try {
                 const now = this.ctx.currentTime;
                 [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    const t = now + (i * 0.06);
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(f, t);
-                    gain.gain.setValueAtTime(0.12, t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start(t);
-                    osc.stop(t + 0.32);
+                    const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), t = now + (i * 0.06);
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t);
+                    gain.gain.setValueAtTime(0.12, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+                    osc.connect(gain); gain.connect(this.ctx.destination); osc.start(t); osc.stop(t + 0.32);
                 });
             } catch (e) {}
         }
@@ -409,17 +418,10 @@
             try {
                 const now = this.ctx.currentTime;
                 [440, 554.37, 659.25, 880, 1108.73].forEach((f, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    const t = now + (i * 0.08);
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(f, t);
-                    gain.gain.setValueAtTime(0.15, t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start(t);
-                    osc.stop(t + 0.4);
+                    const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), t = now + (i * 0.08);
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t);
+                    gain.gain.setValueAtTime(0.15, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                    osc.connect(gain); gain.connect(this.ctx.destination); osc.start(t); osc.stop(t + 0.4);
                 });
             } catch (e) {}
         }
@@ -429,18 +431,10 @@
             this.init();
             if (!this.ctx) return;
             try {
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, now);
-                osc.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
-                gain.gain.setValueAtTime(0.1, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.15);
+                const now = this.ctx.currentTime, osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(880, now); osc.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.start(now); osc.stop(now + 0.15);
             } catch (e) {}
         }
 
@@ -449,25 +443,17 @@
             this.init();
             if (!this.ctx) return;
             try {
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(180, now);
-                osc.frequency.linearRampToValueAtTime(120, now + 0.15);
-                gain.gain.setValueAtTime(0.08, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.15);
+                const now = this.ctx.currentTime, osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, now); osc.frequency.linearRampToValueAtTime(120, now + 0.15);
+                gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.start(now); osc.stop(now + 0.15);
             } catch (e) {}
         }
     }
     const sound = new SoundEngine();
 
     // ==========================================
-    // 4. GENERADOR DE CUADRÍCULA
+    // 3. GENERADOR RECTANGULAR MÓVIL (MAXIMIZADO PARA PANTALLAS VERTICALES)
     // ==========================================
     const DIRECTIONS = {
         H_LR: [0, 1], H_RL: [0, -1], V_TB: [1, 0], V_BT: [-1, 0],
@@ -475,46 +461,54 @@
     };
 
     const PRESETS = {
-        facil: { size: 9, count: 6, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB] },
-        medio: { size: 11, count: 8, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB, DIRECTIONS.D_DR, DIRECTIONS.D_UR] },
-        dificil: { size: 13, count: 10, dirs: Object.values(DIRECTIONS) }
+        blitz: { cols: 7, rows: 8, count: 5, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB, DIRECTIONS.D_DR] },
+        facil: { cols: 8, rows: 9, count: 6, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB] },
+        medio: { cols: 9, rows: 10, count: 7, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB, DIRECTIONS.D_DR, DIRECTIONS.D_UR] },
+        dificil: { cols: 10, rows: 12, count: 9, dirs: Object.values(DIRECTIONS) }
     };
 
     class Generator {
-        static createRandom(fullWordList, difficulty = 'medio') {
+        static createRandom(fullWordList, difficulty = 'medio', rng = Math.random) {
             const config = PRESETS[difficulty] || PRESETS.medio;
+            const maxLen = Math.max(config.cols, config.rows);
             const cleaned = fullWordList
                 .map(w => sanitizeWord(w))
-                .filter(w => w.length >= 3 && w.length <= config.size);
+                .filter(w => w.length >= 3 && w.length <= maxLen);
 
-            const shuffled = [...cleaned].sort(() => Math.random() - 0.5);
-            const selected = shuffled.slice(0, config.count);
-            return this.buildBoard(selected, difficulty);
+            // Fisher-Yates con rng (aleatorio o con semilla diaria)
+            const copy = [...cleaned];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(rng() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            const selected = copy.slice(0, config.count);
+            return this.buildBoard(selected, difficulty, rng);
         }
 
-        static createFixed(words, difficulty = 'medio') {
+        static createFixed(words, difficulty = 'medio', rng = Math.random) {
             const cleaned = words.map(w => sanitizeWord(w));
-            return this.buildBoard(cleaned, difficulty);
+            return this.buildBoard(cleaned, difficulty, rng);
         }
 
-        static buildBoard(words, difficulty) {
+        static buildBoard(words, difficulty, rng = Math.random) {
             const config = PRESETS[difficulty] || PRESETS.medio;
-            const size = config.size;
+            const cols = config.cols;
+            const rows = config.rows;
             const dirs = config.dirs;
 
-            const sorted = [...words].sort((a, b) => b.length - a.length);
-            const grid = Array.from({ length: size }, () => Array(size).fill(''));
+            const sorted = [...words].filter(w => w.length <= Math.max(cols, rows)).sort((a, b) => b.length - a.length);
+            const grid = Array.from({ length: rows }, () => Array(cols).fill(''));
             const placed = [];
 
             for (const word of sorted) {
-                const res = this.placeWord(grid, word, size, dirs);
+                const res = this.placeWord(grid, word, rows, cols, dirs, rng);
                 if (res) placed.push(res);
             }
 
-            for (let r = 0; r < size; r++) {
-                for (let c = 0; c < size; c++) {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
                     if (grid[r][c] === '') {
-                        const idx = Math.floor(Math.random() * SPANISH_LETTER_FREQUENCY.length);
+                        const idx = Math.floor(rng() * SPANISH_LETTER_FREQUENCY.length);
                         grid[r][c] = SPANISH_LETTER_FREQUENCY[idx];
                     }
                 }
@@ -522,31 +516,32 @@
 
             return {
                 grid,
-                size,
+                rows,
+                cols,
                 difficulty,
                 wordsToFind: placed.map(p => p.word),
                 placedWords: placed
             };
         }
 
-        static placeWord(grid, word, size, dirs) {
+        static placeWord(grid, word, rows, cols, dirs, rng) {
             const len = word.length;
-            for (let attempt = 0; attempt < 150; attempt++) {
-                const dir = dirs[Math.floor(Math.random() * dirs.length)];
+            for (let attempt = 0; attempt < 200; attempt++) {
+                const dir = dirs[Math.floor(rng() * dirs.length)];
                 const [dr, dc] = dir;
 
-                let minR = 0, maxR = size - 1;
-                let minC = 0, maxC = size - 1;
+                let minR = 0, maxR = rows - 1;
+                let minC = 0, maxC = cols - 1;
 
-                if (dr > 0) maxR = size - len;
+                if (dr > 0) maxR = rows - len;
                 else if (dr < 0) minR = len - 1;
-                if (dc > 0) maxC = size - len;
+                if (dc > 0) maxC = cols - len;
                 else if (dc < 0) minC = len - 1;
 
                 if (minR > maxR || minC > maxC) continue;
 
-                const sr = Math.floor(Math.random() * (maxR - minR + 1)) + minR;
-                const sc = Math.floor(Math.random() * (maxC - minC + 1)) + minC;
+                const sr = Math.floor(rng() * (maxR - minR + 1)) + minR;
+                const sc = Math.floor(rng() * (maxC - minC + 1)) + minC;
 
                 let fits = true;
                 const cells = [];
@@ -597,7 +592,7 @@
     }
 
     // ==========================================
-    // 5. STORAGE Y RANKING
+    // 4. STORAGE, MONEDAS, TEMAS, RACHA Y RANKING
     // ==========================================
     const DEFAULT_LEADERBOARD = [
         { rank: 1, name: "Valentina_Pro", country: "🇲🇽", points: 8450, badge: "Maestro Supremo", avatar: "🦁" },
@@ -613,25 +608,46 @@
         static getProfile() {
             try {
                 const raw = localStorage.getItem('sopa_pro_profile');
-                return raw ? JSON.parse(raw) : { name: 'Cazapalabras', avatar: '🦊', rank: 'Novato', totalScore: 0 };
-            } catch (e) {
-                return { name: 'Cazapalabras', avatar: '🦊', rank: 'Novato', totalScore: 0 };
-            }
+                if (raw) {
+                    const p = JSON.parse(raw);
+                    if (p.coins === undefined) p.coins = 250;
+                    if (p.freeHints === undefined) p.freeHints = 3;
+                    return p;
+                }
+            } catch (e) {}
+            return { name: 'Cazapalabras', avatar: '🦊', rank: 'Novato', totalScore: 0, coins: 250, freeHints: 3 };
         }
 
         static saveProfile(p) {
             try { localStorage.setItem('sopa_pro_profile', JSON.stringify(p)); } catch (e) {}
         }
 
-        static addScore(pts) {
+        static addScoreAndCoins(scorePts, coinsEarned) {
             const p = this.getProfile();
-            p.totalScore = (p.totalScore || 0) + pts;
+            p.totalScore = (p.totalScore || 0) + scorePts;
+            p.coins = (p.coins || 0) + coinsEarned;
             if (p.totalScore >= 7500) p.rank = 'Maestro Supremo';
             else if (p.totalScore >= 4500) p.rank = 'Cazador Legendario';
             else if (p.totalScore >= 2000) p.rank = 'Experto Táctico';
             else if (p.totalScore >= 800) p.rank = 'Explorador';
             this.saveProfile(p);
-            return p.totalScore;
+            return p;
+        }
+
+        static spendCoins(amount) {
+            const p = this.getProfile();
+            if ((p.coins || 0) < amount) return false;
+            p.coins -= amount;
+            this.saveProfile(p);
+            return true;
+        }
+
+        static getTheme() {
+            return localStorage.getItem('sopa_bg_theme') || 'montanas';
+        }
+
+        static saveTheme(key) {
+            localStorage.setItem('sopa_bg_theme', key);
         }
 
         static getUnlockedCards() {
@@ -659,12 +675,21 @@
 
         static saveAdventureProgress(levelId, stars) {
             const p = this.getAdventureProgress();
-            if (levelId >= p.maxLevel) {
-                p.maxLevel = Math.min(levelId + 1, ADVENTURE_LEVELS.length);
-            }
+            if (levelId >= p.maxLevel) p.maxLevel = Math.min(levelId + 1, ADVENTURE_LEVELS.length);
             p.levelStars[levelId] = Math.max(p.levelStars[levelId] || 0, stars);
             try { localStorage.setItem('sopa_adv_progress', JSON.stringify(p)); } catch (e) {}
             return p;
+        }
+
+        static getDailyState() {
+            try {
+                const raw = localStorage.getItem('sopa_daily_state');
+                return raw ? JSON.parse(raw) : { lastCompletedDate: null, lastGiftDate: null, streak: 0 };
+            } catch (e) { return { lastCompletedDate: null, lastGiftDate: null, streak: 0 }; }
+        }
+
+        static saveDailyState(s) {
+            try { localStorage.setItem('sopa_daily_state', JSON.stringify(s)); } catch (e) {}
         }
 
         static getLeaderboard() {
@@ -686,17 +711,12 @@
     }
 
     // ==========================================
-    // 6. MULTIJUGADOR P2P
+    // 5. MULTIJUGADOR P2P
     // ==========================================
     class Multiplayer {
         constructor(handlers) {
-            this.h = handlers;
-            this.peer = null;
-            this.conn = null;
-            this.isHost = false;
-            this.code = null;
+            this.h = handlers; this.peer = null; this.conn = null; this.isHost = false; this.code = null;
         }
-
         createRoom() {
             this.code = Math.random().toString(36).substring(2, 6).toUpperCase();
             this.isHost = true;
@@ -704,32 +724,20 @@
                 this.peer = new window.Peer('sopa-match-' + this.code, { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
                 this.peer.on('open', () => this.h.onCreated(this.code));
                 this.peer.on('connection', (c) => { this.conn = c; this.wire(); });
-                this.peer.on('error', (err) => {
-                    if (err.type === 'unavailable-id') this.createRoom();
-                    else this.h.onError('Error creando la sala');
-                });
-            } else { this.h.onError('Sin conexión para multijugador.'); }
+                this.peer.on('error', (err) => { if (err.type === 'unavailable-id') this.createRoom(); else this.h.onError('Error creando sala'); });
+            } else this.h.onError('Sin conexión para multijugador.');
         }
-
         joinRoom(code) {
-            this.code = code.trim().toUpperCase();
-            this.isHost = false;
+            this.code = code.trim().toUpperCase(); this.isHost = false;
             if (window.Peer) {
                 this.peer = new window.Peer('sopa-guest-' + Date.now(), { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
-                this.peer.on('open', () => {
-                    this.conn = this.peer.connect('sopa-match-' + this.code, { reliable: true });
-                    this.wire();
-                });
+                this.peer.on('open', () => { this.conn = this.peer.connect('sopa-match-' + this.code, { reliable: true }); this.wire(); });
                 this.peer.on('error', () => this.h.onError('No se encontró la sala.'));
             }
         }
-
         wire() {
             if (!this.conn) return;
-            this.conn.on('open', () => {
-                if (this.isHost) this.h.onJoined();
-                else this.send({ type: 'HELLO', profile: Storage.getProfile() });
-            });
+            this.conn.on('open', () => { if (this.isHost) this.h.onJoined(); else this.send({ type: 'HELLO', profile: Storage.getProfile() }); });
             this.conn.on('data', (d) => {
                 if (d.type === 'HELLO') this.h.onJoined(d.profile);
                 if (d.type === 'START') this.h.onStart(d);
@@ -738,14 +746,9 @@
             });
             this.conn.on('close', () => this.h.onLeave());
         }
-
         send(msg) { if (this.conn && this.conn.open) this.conn.send(msg); }
-        startMatch(puzzle) {
-            this.send({ type: 'START', puzzle, hostProfile: Storage.getProfile() });
-            this.h.onStart({ puzzle, hostProfile: Storage.getProfile() });
-        }
+        startMatch(puzzle) { this.send({ type: 'START', puzzle, hostProfile: Storage.getProfile() }); this.h.onStart({ puzzle, hostProfile: Storage.getProfile() }); }
         sendWord(word, cells) { this.send({ type: 'WORD', word, cells }); }
-        sendEmoji(emoji) { this.send({ type: 'EMOJI', emoji }); }
         disconnect() {
             if (this.conn) try { this.conn.close(); } catch (e) {}
             if (this.peer) try { this.peer.destroy(); } catch (e) {}
@@ -754,21 +757,20 @@
     }
 
     // ==========================================
-    // 7. CONTROLADOR PRINCIPAL CASUAL MÓVIL
+    // 6. CONTROLADOR PRINCIPAL
     // ==========================================
     class AppController {
         constructor() {
-            this.mode = 'adventure';
+            this.mode = 'adventure'; // 'adventure' | 'classic' | 'daily' | 'blitz' | 'mystery' | 'multi'
             this.currentLevel = null;
             this.classicCategory = null;
             this.classicDiff = 'medio';
             this.puzzle = null;
             this.found = new Map();
-            this.hintsLeft = 3;
             this.timer = null;
             this.seconds = 0;
+            this.blitzScore = 0;
 
-            // Arrastre
             this.isDragging = false;
             this.startCell = null;
             this.selectedCells = [];
@@ -781,26 +783,39 @@
                     document.getElementById('code-display').textContent = code;
                 },
                 onJoined: () => {
-                    document.getElementById('wait-status-msg').textContent = '¡Rival conectado! Listo para empezar.';
+                    document.getElementById('wait-status-msg').textContent = '¡Rival conectado!';
                     document.getElementById('btn-launch-match').classList.remove('hidden');
                 },
                 onStart: (d) => this.startMultiGame(d),
                 onWord: (d) => this.onRivalWord(d),
-                onEmoji: (e) => this.spawnEmoji(e, false),
-                onLeave: () => { alert('El rival abandonó la partida.'); this.stopTimer(); this.nav('menu'); },
+                onEmoji: () => {},
+                onLeave: () => { alert('El rival salió.'); this.stopTimer(); this.nav('menu'); },
                 onError: (m) => alert(m)
             });
 
+            this.applyTheme(Storage.getTheme());
             this.bindUI();
             this.renderHubInfo();
+            this.startDailyCountdownLoop();
+            window.addEventListener('resize', () => {
+                if (this.puzzle && !document.getElementById('screen-game').classList.contains('hidden')) {
+                    this.resizeBoard();
+                }
+            });
+        }
+
+        applyTheme(themeKey) {
+            const t = BG_THEMES[themeKey] || BG_THEMES.montanas;
+            Storage.saveTheme(themeKey);
+            document.body.style.backgroundImage = `linear-gradient(180deg, rgba(15, 23, 42, 0.22) 0%, rgba(15, 23, 42, 0.08) 45%, rgba(15, 23, 42, 0.45) 100%), url('${t.url}')`;
         }
 
         bindUI() {
-            // Navegación barra inferior (Bottom Dock)
+            // Barra inferior
             document.querySelectorAll('.bottom-nav-item').forEach(item => {
                 item.onclick = () => {
                     const target = item.dataset.nav;
-                    if (target === 'categories') this.renderClassicCategories();
+                    if (target === 'daily') this.renderDailyScreen();
                     if (target === 'ranking') this.renderLeaderboard();
                     if (target === 'album') this.renderAlbum();
                     if (target === 'menu') this.renderHubInfo();
@@ -808,53 +823,49 @@
                 };
             });
 
-            // Botón Superior Volver
             document.getElementById('btn-top-back').onclick = () => {
                 this.stopTimer();
                 this.renderHubInfo();
                 this.nav('menu');
             };
 
-            // Botón Gigante "Jugar Nivel X" en el Hub
+            // Botón Gigante "Jugar Nivel X"
             document.getElementById('btn-play-current-level').onclick = () => {
                 const prog = Storage.getAdventureProgress();
                 const lvl = ADVENTURE_LEVELS.find(l => l.id === prog.maxLevel) || ADVENTURE_LEVELS[0];
                 this.startAdventureLevel(lvl);
             };
 
-            // Botones rápidos del Hub
-            document.getElementById('btn-quick-levels').onclick = () => {
-                this.renderAdventureMap();
-                this.nav('adventure');
-            };
-            document.getElementById('btn-quick-custom').onclick = () => this.nav('creator');
+            // Accesos Hub
+            document.getElementById('btn-hub-blitz').onclick = () => this.startBlitzMode();
+            document.getElementById('btn-hub-mystery').onclick = () => this.startMysteryMode();
+            document.getElementById('btn-hub-themes').onclick = () => this.openSettingsModal();
+            document.getElementById('btn-shop-open').onclick = () => this.openSettingsModal();
+            document.getElementById('btn-coins-pill').onclick = () => this.openSettingsModal();
 
-            // Botones inferiores durante el juego (Thumb Dock)
-            document.getElementById('btn-game-levels').onclick = () => {
-                this.stopTimer();
-                this.renderAdventureMap();
-                this.nav('adventure');
-            };
-            document.getElementById('btn-game-classic').onclick = () => {
-                this.stopTimer();
-                this.renderClassicCategories();
-                this.nav('categories');
-            };
-            document.getElementById('btn-game-album').onclick = () => {
-                this.stopTimer();
-                this.renderAlbum();
-                this.nav('album');
-            };
-            document.getElementById('btn-hint').onclick = () => this.useHint();
-            document.getElementById('btn-shuffle-board').onclick = () => {
-                if (this.mode === 'adventure' && this.currentLevel) {
-                    this.startAdventureLevel(this.currentLevel);
-                } else if (this.mode === 'classic' && this.classicCategory) {
-                    this.startClassicGame(this.classicCategory);
-                }
-            };
+            document.getElementById('btn-quick-levels').onclick = () => { this.renderAdventureMap(); this.nav('adventure'); };
+            document.getElementById('btn-open-more-modes').onclick = () => this.nav('modes');
+            document.getElementById('btn-open-daily-gift').onclick = () => this.openDailyGiftModal();
 
-            // Selector de dificultad en Modo Clásico
+            // Pantalla Más Modos
+            document.getElementById('btn-mode-classic').onclick = () => { this.renderClassicCategories(); this.nav('categories'); };
+            document.getElementById('btn-mode-blitz').onclick = () => this.startBlitzMode();
+            document.getElementById('btn-mode-mystery').onclick = () => this.startMysteryMode();
+            document.getElementById('btn-mode-multi').onclick = () => { this.mode = 'multi'; this.nav('lobby'); };
+            document.getElementById('btn-mode-creator').onclick = () => this.nav('creator');
+
+            // Desafío Diario
+            document.getElementById('btn-play-daily').onclick = () => this.startDailyChallenge();
+
+            // Botones inferiores en Juego
+            document.getElementById('btn-game-daily').onclick = () => { this.stopTimer(); this.renderDailyScreen(); this.nav('daily'); };
+            document.getElementById('btn-game-modes').onclick = () => { this.stopTimer(); this.nav('modes'); };
+            document.getElementById('btn-game-gift').onclick = () => this.openDailyGiftModal();
+            document.getElementById('btn-hint').onclick = () => this.useLetterHint();
+            document.getElementById('btn-power-bolt').onclick = () => this.useWordBolt();
+            document.getElementById('btn-shuffle-board').onclick = () => this.regenerateCurrentBoard();
+
+            // Selector Dificultad Clásico
             document.querySelectorAll('.classic-diff-pill').forEach(btn => {
                 btn.onclick = () => {
                     document.querySelectorAll('.classic-diff-pill').forEach(b => {
@@ -867,62 +878,60 @@
                 };
             });
 
-            // Música y Sonido (Modal)
-            const updateAudioUI = () => {
+            // Modal Ajustes, Fondos y Música
+            const updateSettingsUI = () => {
+                const curBg = Storage.getTheme();
+                document.querySelectorAll('.bg-theme-btn').forEach(b => {
+                    if (b.dataset.bg === curBg) b.classList.add('border-emerald-500', 'bg-emerald-50');
+                    else b.classList.remove('border-emerald-500', 'bg-emerald-50');
+                });
                 document.querySelectorAll('.music-genre-btn').forEach(btn => {
-                    if (btn.dataset.genre === sound.musicGenre) {
-                        btn.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
-                        btn.classList.remove('border-slate-200');
-                    } else {
-                        btn.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
-                        btn.classList.add('border-slate-200');
-                    }
+                    if (btn.dataset.genre === sound.musicGenre) btn.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+                    else btn.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
                 });
                 const sfxBtn = document.getElementById('btn-toggle-sfx');
-                if (sfxBtn) {
-                    sfxBtn.textContent = sound.enabled ? 'Activado' : 'Desactivado';
-                    sfxBtn.className = sound.enabled
-                        ? 'px-3.5 py-1.5 rounded-full text-xs font-black bg-emerald-500 text-white shadow transition'
-                        : 'px-3.5 py-1.5 rounded-full text-xs font-black bg-slate-300 text-slate-600 transition';
-                }
-                document.getElementById('sound-icon').textContent = (sound.musicGenre === 'off' && !sound.enabled) ? '🔇' : '🎵';
+                sfxBtn.textContent = sound.enabled ? 'Activado' : 'Desactivado';
+                sfxBtn.className = sound.enabled
+                    ? 'px-3.5 py-1.5 rounded-full text-xs font-black bg-emerald-500 text-white shadow transition'
+                    : 'px-3.5 py-1.5 rounded-full text-xs font-black bg-slate-300 text-slate-600 transition';
             };
+            this.updateSettingsUI = updateSettingsUI;
 
-            document.getElementById('btn-sound-toggle').onclick = () => {
-                updateAudioUI();
-                document.getElementById('modal-audio-settings').classList.remove('hidden');
-            };
+            document.getElementById('btn-sound-toggle').onclick = () => this.openSettingsModal();
+            document.getElementById('btn-close-audio-modal').onclick = () => document.getElementById('modal-audio-settings').classList.add('hidden');
+            document.getElementById('btn-save-audio-modal').onclick = () => document.getElementById('modal-audio-settings').classList.add('hidden');
 
-            document.getElementById('btn-close-audio-modal').onclick = () => {
-                document.getElementById('modal-audio-settings').classList.add('hidden');
-            };
-            document.getElementById('btn-save-audio-modal').onclick = () => {
-                document.getElementById('modal-audio-settings').classList.add('hidden');
-            };
-
+            document.querySelectorAll('.bg-theme-btn').forEach(btn => {
+                btn.onclick = () => {
+                    this.applyTheme(btn.dataset.bg);
+                    updateSettingsUI();
+                };
+            });
             document.querySelectorAll('.music-genre-btn').forEach(btn => {
                 btn.onclick = () => {
                     sound.setMusicGenre(btn.dataset.genre);
-                    updateAudioUI();
+                    updateSettingsUI();
                 };
             });
+            document.getElementById('btn-toggle-sfx').onclick = () => { sound.toggleSfx(); updateSettingsUI(); };
 
-            document.getElementById('btn-toggle-sfx').onclick = () => {
-                sound.toggleSfx();
-                updateAudioUI();
-            };
-
-            // Iniciar música suavemente al primer toque (requisito de navegadores móviles)
             const unlockAudioOnce = () => {
-                if (sound.musicGenre !== 'off' && !sound.isPlayingMusic) {
-                    sound.startMusic();
-                }
+                if (sound.musicGenre !== 'off' && !sound.isPlayingMusic) sound.startMusic();
                 window.removeEventListener('pointerdown', unlockAudioOnce);
             };
             window.addEventListener('pointerdown', unlockAudioOnce);
-            updateAudioUI();
 
-            // Multijugador Lobby
+            // Regalo Diario
+            document.getElementById('btn-close-gift-modal').onclick = () => document.getElementById('modal-daily-gift').classList.add('hidden');
+            document.getElementById('btn-claim-gift-done').onclick = () => {
+                document.getElementById('modal-daily-gift').classList.add('hidden');
+                this.renderHubInfo();
+            };
+            document.querySelectorAll('.gift-box-btn').forEach(box => {
+                box.onclick = () => this.claimDailyGiftBox();
+            });
+
+            // Multijugador
             document.getElementById('btn-host-room').onclick = () => this.multiplayer.createRoom();
             document.getElementById('btn-join-match').onclick = () => {
                 const c = document.getElementById('room-input-code').value;
@@ -935,8 +944,7 @@
             document.getElementById('btn-launch-match').onclick = () => {
                 const cats = Object.values(CLASSIC_CATEGORIES);
                 const randomCat = cats[Math.floor(Math.random() * cats.length)];
-                const p = Generator.createRandom(randomCat.words, 'medio');
-                this.multiplayer.startMatch(p);
+                this.multiplayer.startMatch(Generator.createRandom(randomCat.words, 'medio'));
             };
 
             // Perfil Modal
@@ -946,11 +954,7 @@
                 document.getElementById('prof-select-avatar').value = p.avatar;
                 document.getElementById('modal-profile-edit').classList.remove('hidden');
             };
-
-            document.getElementById('btn-close-prof-modal').onclick = () => {
-                document.getElementById('modal-profile-edit').classList.add('hidden');
-            };
-
+            document.getElementById('btn-close-prof-modal').onclick = () => document.getElementById('modal-profile-edit').classList.add('hidden');
             document.getElementById('form-edit-profile').onsubmit = (e) => {
                 e.preventDefault();
                 const p = Storage.getProfile();
@@ -967,29 +971,26 @@
                 this.renderHubInfo();
                 this.nav('menu');
             };
-
             document.getElementById('btn-next-level').onclick = () => {
                 document.getElementById('modal-reward-card').classList.add('hidden');
                 if (this.currentLevel && this.currentLevel.id < ADVENTURE_LEVELS.length) {
-                    const nextLvl = ADVENTURE_LEVELS.find(l => l.id === this.currentLevel.id + 1);
-                    if (nextLvl) this.startAdventureLevel(nextLvl);
+                    this.startAdventureLevel(ADVENTURE_LEVELS.find(l => l.id === this.currentLevel.id + 1));
                 } else {
                     this.renderAdventureMap();
                     this.nav('adventure');
                 }
             };
 
-            // Creador personalizado
+            // Creador
             document.getElementById('form-create-puzzle').onsubmit = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('custom-title').value.trim();
                 const raw = document.getElementById('custom-words').value.split(/[,\n]/);
-                const words = raw.map(w => sanitizeWord(w)).filter(w => w.length >= 3 && w.length <= 13);
+                const words = raw.map(w => sanitizeWord(w)).filter(w => w.length >= 3 && w.length <= 12);
                 if (words.length < 4) { alert('Introduce al menos 4 palabras válidas.'); return; }
 
                 this.mode = 'classic';
                 this.puzzle = Generator.createFixed(words, 'medio');
-                this.hintsLeft = 3;
                 document.getElementById('game-hud-multi').classList.add('hidden');
                 document.getElementById('top-hud-title').textContent = 'Sopa Propia';
                 document.getElementById('game-theme-banner').textContent = name;
@@ -998,6 +999,11 @@
             };
 
             this.bindGridEvents();
+        }
+
+        openSettingsModal() {
+            this.updateSettingsUI();
+            document.getElementById('modal-audio-settings').classList.remove('hidden');
         }
 
         nav(view) {
@@ -1014,6 +1020,7 @@
                 dock.classList.add('hidden');
                 topBack.classList.remove('hidden');
                 topLevelInfo.classList.remove('hidden');
+                setTimeout(() => this.resizeBoard(), 20);
             } else {
                 dock.classList.remove('hidden');
                 if (view === 'menu') topBack.classList.add('hidden');
@@ -1021,7 +1028,13 @@
                 topLevelInfo.classList.add('hidden');
             }
 
-            // Actualizar estado activo de la barra inferior
+            // En pantalla Desafío Diario usar fondo de hojas si está en pantalla diaria, o restaurar tema
+            if (view === 'daily') {
+                document.body.style.backgroundImage = `linear-gradient(180deg, rgba(10, 25, 15, 0.35), rgba(10, 25, 15, 0.55)), url('${BG_THEMES.hojas.url}')`;
+            } else {
+                this.applyTheme(Storage.getTheme());
+            }
+
             document.querySelectorAll('.bottom-nav-item').forEach(item => {
                 if (item.dataset.nav === view) item.classList.add('active');
                 else item.classList.remove('active');
@@ -1032,32 +1045,200 @@
             const p = Storage.getProfile();
             const prog = Storage.getAdventureProgress();
             const unlocked = Storage.getUnlockedCards();
+            const daily = Storage.getDailyState();
+            const today = getTodayDateKey();
 
-            // Header
-            document.getElementById('header-avatar').textContent = p.avatar;
-            document.getElementById('header-score').textContent = (p.totalScore || 0).toLocaleString();
-
-            // Hub Central Card
+            document.getElementById('header-score').textContent = (p.coins || 0).toLocaleString();
             document.getElementById('hub-avatar').textContent = p.avatar;
             document.getElementById('hub-player-name').textContent = p.name.toUpperCase();
-            document.getElementById('hub-rank-badge').textContent = `Rango: ${p.rank || 'Novato'}`;
+            document.getElementById('hub-rank-badge').textContent = `Rango: ${p.rank || 'Novato'} • ${p.totalScore || 0} pts`;
 
-            const pct = Math.round((prog.maxLevel / ADVENTURE_LEVELS.length) * 100);
-            document.getElementById('hub-world-bar').style.width = `${pct}%`;
+            const curLvl = ADVENTURE_LEVELS.find(l => l.id === prog.maxLevel) || ADVENTURE_LEVELS[0];
+            document.getElementById('hub-world-name').textContent = curLvl.world;
+            document.getElementById('hub-world-bar').style.width = `${Math.round((prog.maxLevel / ADVENTURE_LEVELS.length) * 100)}%`;
             document.getElementById('hub-world-progress-text').textContent = `${prog.maxLevel} / ${ADVENTURE_LEVELS.length}`;
 
             document.getElementById('hub-cards-count').textContent = `${unlocked.length}/${ADVENTURE_LEVELS.length} Cartas Rescatadas`;
-            document.getElementById('hub-streak-badge').textContent = `Nivel ${prog.maxLevel}`;
+            document.getElementById('hub-streak-days').textContent = `${daily.streak || 0} DÍAS`;
             document.getElementById('btn-play-level-text').textContent = `Jugar nivel ${prog.maxLevel}`;
+
+            // Indicador de regalo diario disponible
+            const giftDot = document.getElementById('gift-ready-dot');
+            if (daily.lastGiftDate !== today) giftDot.classList.remove('hidden');
+            else giftDot.classList.add('hidden');
+
+            // Indicador de desafío diario nuevo
+            const dailyBadge = document.getElementById('daily-nav-badge');
+            if (daily.lastCompletedDate !== today) dailyBadge.classList.remove('hidden');
+            else dailyBadge.classList.add('hidden');
+
+            this.updateHintBadgeUI();
+        }
+
+        updateHintBadgeUI() {
+            const p = Storage.getProfile();
+            const badge = document.getElementById('hint-count-badge');
+            if ((p.freeHints || 0) > 0) badge.textContent = `${p.freeHints} gratis`;
+            else badge.textContent = '100🪙';
         }
 
         // ==========================================
-        // MODO CLÁSICO (AL AZAR)
+        // DESAFÍO DIARIO (CADA DÍA AL AZAR POR FECHA)
+        // ==========================================
+        getTodayQuoteData() {
+            const key = getTodayDateKey();
+            const seed = hashString(key);
+            const idx = seed % DAILY_QUOTES.length;
+            return { key, seed, quote: DAILY_QUOTES[idx] };
+        }
+
+        renderDailyScreen() {
+            const { key, quote } = this.getTodayQuoteData();
+            const daily = Storage.getDailyState();
+            const isDone = daily.lastCompletedDate === key;
+
+            const d = new Date();
+            const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+            const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+            document.getElementById('daily-date-ribbon').textContent = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+
+            const renderedQuote = quote.template.replace(/\{([A-Z]+)\}/g, (match, word) => {
+                return isDone ? `<strong class="text-emerald-600">${word}</strong>` : '_'.repeat(word.length);
+            });
+            document.getElementById('daily-quote-text').innerHTML = renderedQuote;
+            document.getElementById('daily-quote-author').textContent = quote.author;
+
+            const badge = document.getElementById('daily-status-badge');
+            if (isDone) badge.classList.remove('hidden');
+            else badge.classList.add('hidden');
+        }
+
+        startDailyChallenge() {
+            const { seed, quote } = this.getTodayQuoteData();
+            const rng = createSeededRng(seed);
+
+            this.mode = 'daily';
+            this.puzzle = Generator.createFixed(quote.words, 'medio', rng);
+            document.getElementById('game-hud-multi').classList.add('hidden');
+            document.getElementById('top-hud-title').textContent = 'Desafío Diario';
+            document.getElementById('game-theme-banner').textContent = `📅 Cita de ${quote.author}`;
+
+            this.resetGameRound();
+            this.nav('game');
+        }
+
+        startDailyCountdownLoop() {
+            const update = () => {
+                const now = new Date();
+                const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+                const diff = Math.max(0, Math.floor((tomorrow - now) / 1000));
+                const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+                const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+                const s = String(diff % 60).padStart(2, '0');
+                const el = document.getElementById('daily-countdown');
+                if (el) el.textContent = `${h}:${m}:${s}`;
+            };
+            update();
+            setInterval(update, 1000);
+        }
+
+        // ==========================================
+        // REGALO DIARIO (3 COFRES)
+        // ==========================================
+        openDailyGiftModal() {
+            const daily = Storage.getDailyState();
+            const today = getTodayDateKey();
+            if (daily.lastGiftDate === today) {
+                alert('Ya abriste tu regalo de hoy. ¡Vuelve mañana!');
+                return;
+            }
+            document.getElementById('gift-streak-text').textContent = `Racha: ${daily.streak || 0} días`;
+            document.getElementById('gift-streak-bar').style.width = `${Math.min(100, ((daily.streak || 1) / 7) * 100)}%`;
+            document.getElementById('gift-boxes-area').classList.remove('hidden');
+            document.getElementById('gift-result-area').classList.add('hidden');
+            document.getElementById('modal-daily-gift').classList.remove('hidden');
+        }
+
+        claimDailyGiftBox() {
+            const rewards = [100, 150, 200, 250];
+            const bonus = rewards[Math.floor(Math.random() * rewards.length)];
+            const daily = Storage.getDailyState();
+            daily.lastGiftDate = getTodayDateKey();
+            Storage.saveDailyState(daily);
+            Storage.addScoreAndCoins(bonus, bonus);
+
+            sound.playCardUnlock();
+            if (window.confetti) window.confetti({ particleCount: 90, spread: 70, origin: { y: 0.5 } });
+
+            document.getElementById('gift-boxes-area').classList.add('hidden');
+            document.getElementById('gift-result-area').classList.remove('hidden');
+            document.getElementById('gift-reward-msg').textContent = `+${bonus} Monedas 🪙`;
+            this.renderHubInfo();
+        }
+
+        // ==========================================
+        // NUEVAS MODALIDADES: BLITZ (60s) & MISTERIO
+        // ==========================================
+        startBlitzMode() {
+            this.mode = 'blitz';
+            this.blitzScore = 0;
+            this.seconds = 60;
+            this.loadNextBlitzBoard();
+            this.nav('game');
+        }
+
+        loadNextBlitzBoard() {
+            const cats = Object.values(CLASSIC_CATEGORIES);
+            const cat = cats[Math.floor(Math.random() * cats.length)];
+            this.puzzle = Generator.createRandom(cat.words, 'blitz');
+            document.getElementById('game-hud-multi').classList.add('hidden');
+            document.getElementById('top-hud-title').textContent = `⚡ Blitz (${this.blitzScore} pts)`;
+            document.getElementById('game-theme-banner').textContent = `${cat.icon} ${cat.name} • +8s por palabra`;
+            this.found.clear();
+            this.colorIndex = 0;
+            this.renderBoard();
+            this.renderWordChips();
+            this.startBlitzTimer();
+        }
+
+        startBlitzTimer() {
+            if (this.timer) clearInterval(this.timer);
+            const disp = document.getElementById('hud-time-display');
+            disp.textContent = `${this.seconds}s`;
+            this.timer = setInterval(() => {
+                this.seconds--;
+                disp.textContent = `${this.seconds}s`;
+                if (this.seconds <= 0) {
+                    this.stopTimer();
+                    sound.playCardUnlock();
+                    const coins = Math.max(50, Math.floor(this.blitzScore / 2));
+                    Storage.addScoreAndCoins(this.blitzScore, coins);
+                    this.renderHubInfo();
+                    alert(`⚡ ¡TIEMPO AGOTADO!\nPuntuación Blitz: ${this.blitzScore} pts\nGanaste +${coins} 🪙`);
+                    this.nav('menu');
+                }
+            }, 1000);
+        }
+
+        startMysteryMode() {
+            this.mode = 'mystery';
+            const cats = Object.values(CLASSIC_CATEGORIES);
+            const cat = cats[Math.floor(Math.random() * cats.length)];
+            this.classicCategory = cat;
+            this.puzzle = Generator.createRandom(cat.words, 'medio');
+            document.getElementById('game-hud-multi').classList.add('hidden');
+            document.getElementById('top-hud-title').textContent = '🙈 Modo Misterio';
+            document.getElementById('game-theme-banner').textContent = `${cat.icon} Tema: ${cat.name}`;
+            this.resetGameRound();
+            this.nav('game');
+        }
+
+        // ==========================================
+        // MODO CLÁSICO & MODO AVENTURA
         // ==========================================
         renderClassicCategories() {
             const grid = document.getElementById('classic-categories-grid');
             grid.innerHTML = '';
-
             Object.values(CLASSIC_CATEGORIES).forEach(cat => {
                 const el = document.createElement('div');
                 el.className = 'casual-card p-3.5 cursor-pointer flex flex-col items-center text-center transition active:scale-95';
@@ -1075,28 +1256,29 @@
             this.mode = 'classic';
             this.classicCategory = category;
             this.puzzle = Generator.createRandom(category.words, this.classicDiff);
-            this.hintsLeft = 3;
-
             document.getElementById('game-hud-multi').classList.add('hidden');
             document.getElementById('top-hud-title').textContent = 'Modo Clásico';
             document.getElementById('game-theme-banner').textContent = `${category.icon} ${category.name}`;
-
             this.resetGameRound();
             this.nav('game');
         }
 
-        // ==========================================
-        // MODO AVENTURA (NIVELES)
-        // ==========================================
         renderAdventureMap() {
             const list = document.getElementById('adventure-levels-list');
             list.innerHTML = '';
             const prog = Storage.getAdventureProgress();
+            let lastWorld = '';
 
             ADVENTURE_LEVELS.forEach(lvl => {
+                if (lvl.world !== lastWorld) {
+                    lastWorld = lvl.world;
+                    const hdr = document.createElement('div');
+                    hdr.className = 'text-xs font-black uppercase tracking-wider text-white bg-black/45 px-3 py-1.5 rounded-xl backdrop-blur-sm';
+                    hdr.textContent = lvl.world;
+                    list.appendChild(hdr);
+                }
                 const isUnlocked = lvl.id <= prog.maxLevel;
                 const stars = prog.levelStars[lvl.id] || 0;
-
                 const card = document.createElement('div');
                 card.className = `level-card-casual ${isUnlocked ? 'unlocked' : 'locked'}`;
                 card.innerHTML = `
@@ -1111,9 +1293,7 @@
                         </div>
                     </div>
                     <div>
-                        ${isUnlocked 
-                            ? `<span class="btn-arcade-green px-3.5 py-1.5 rounded-full text-xs font-bold inline-block">Jugar</span>`
-                            : `<span class="text-lg">🔒</span>`}
+                        ${isUnlocked ? `<span class="btn-arcade-green px-3.5 py-1.5 rounded-full text-xs font-bold inline-block">Jugar</span>` : `<span class="text-lg">🔒</span>`}
                     </div>
                 `;
                 if (isUnlocked) card.onclick = () => this.startAdventureLevel(lvl);
@@ -1125,18 +1305,21 @@
             this.mode = 'adventure';
             this.currentLevel = level;
             this.puzzle = Generator.createFixed(level.words, level.difficulty);
-            this.hintsLeft = 3;
-
             document.getElementById('game-hud-multi').classList.add('hidden');
             document.getElementById('top-hud-title').textContent = `Nivel ${level.id}`;
             document.getElementById('game-theme-banner').textContent = level.title;
-
             this.resetGameRound();
             this.nav('game');
         }
 
+        regenerateCurrentBoard() {
+            if (this.mode === 'adventure' && this.currentLevel) this.startAdventureLevel(this.currentLevel);
+            else if (this.mode === 'classic' && this.classicCategory) this.startClassicGame(this.classicCategory);
+            else if (this.mode === 'mystery') this.startMysteryMode();
+        }
+
         // ==========================================
-        // ÁLBUM DE CARTAS
+        // ÁLBUM Y RANKING
         // ==========================================
         renderAlbum() {
             const grid = document.getElementById('album-grid');
@@ -1147,7 +1330,6 @@
             ADVENTURE_LEVELS.forEach(lvl => {
                 const r = lvl.reward;
                 const isUnlocked = unlocked.includes(r.id);
-
                 const item = document.createElement('div');
                 item.className = `album-card-casual ${isUnlocked ? 'unlocked' : 'locked'}`;
                 item.innerHTML = `
@@ -1156,9 +1338,7 @@
                         ${!isUnlocked ? '<div class="album-lock-overlay">🔒</div>' : ''}
                     </div>
                     <div class="p-2.5">
-                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full" style="background:${r.rarityColor}20; color:${r.rarityColor}">
-                            ${r.rarity}
-                        </span>
+                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full" style="background:${r.rarityColor}20; color:${r.rarityColor}">${r.rarity}</span>
                         <h4 class="font-extrabold text-xs text-slate-800 truncate mt-1">${isUnlocked ? r.name : '??? Bloqueado'}</h4>
                     </div>
                 `;
@@ -1180,19 +1360,14 @@
             document.getElementById('modal-reward-card').classList.remove('hidden');
         }
 
-        // ==========================================
-        // RANKING GLOBAL
-        // ==========================================
         renderLeaderboard() {
             const list = Storage.getLeaderboard();
             const container = document.getElementById('ranking-list');
             container.innerHTML = '';
-
             list.forEach(item => {
                 const el = document.createElement('div');
                 el.className = `casual-card p-3 flex items-center justify-between ${item.isUser ? 'border-2 border-emerald-500 bg-emerald-50' : ''}`;
                 const medal = item.rank === 1 ? '🥇' : item.rank === 2 ? '🥈' : item.rank === 3 ? '🥉' : `#${item.rank}`;
-
                 el.innerHTML = `
                     <div class="flex items-center space-x-3">
                         <span class="text-sm font-black w-7 text-center text-slate-700">${medal}</span>
@@ -1202,19 +1377,19 @@
                             <div class="text-[10px] font-bold text-slate-500">${item.badge}</div>
                         </div>
                     </div>
-                    <div class="text-amber-600 font-black text-xs font-mono">${item.points.toLocaleString()} 🪙</div>
+                    <div class="text-amber-600 font-black text-xs font-mono">${item.points.toLocaleString()} pts</div>
                 `;
                 container.appendChild(el);
             });
         }
 
         // ==========================================
-        // TABLERO BLANCO + CÁPSULAS SVG CONTINUAS
+        // TABLERO RECTANGULAR FULL-SIZE + POWER-UPS
         // ==========================================
         resetGameRound() {
             this.found.clear();
             this.colorIndex = 0;
-            document.getElementById('hint-count-badge').textContent = this.hintsLeft;
+            this.updateHintBadgeUI();
             this.renderBoard();
             this.renderWordChips();
             this.startTimer();
@@ -1226,10 +1401,9 @@
             gridEl.innerHTML = '';
             svgEl.innerHTML = '';
 
-            const size = this.puzzle.size;
-            svgEl.setAttribute('viewBox', `0 0 ${size * 100} ${size * 100}`);
+            const { rows, cols } = this.puzzle;
+            svgEl.setAttribute('viewBox', `0 0 ${cols * 100} ${rows * 100}`);
 
-            // Línea de arrastre en vivo (inicialmente oculta)
             const dragLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             dragLine.setAttribute('id', 'active-drag-line');
             dragLine.setAttribute('stroke', 'rgba(59, 130, 246, 0.72)');
@@ -1238,11 +1412,11 @@
             dragLine.setAttribute('visibility', 'hidden');
             svgEl.appendChild(dragLine);
 
-            gridEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
-            gridEl.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+            gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            gridEl.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
 
-            for (let r = 0; r < size; r++) {
-                for (let c = 0; c < size; c++) {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
                     const tile = document.createElement('div');
                     tile.className = 'board-tile';
                     tile.textContent = this.puzzle.grid[r][c];
@@ -1251,6 +1425,28 @@
                     gridEl.appendChild(tile);
                 }
             }
+            this.resizeBoard();
+        }
+
+        resizeBoard() {
+            const stage = document.getElementById('board-stage');
+            const wrap = document.getElementById('puzzle-board-wrap');
+            if (!stage || !wrap || !this.puzzle) return;
+
+            const availW = stage.clientWidth;
+            const availH = stage.clientHeight;
+            if (availW <= 0 || availH <= 0) return;
+
+            const { cols, rows } = this.puzzle;
+            const cellSize = Math.floor(Math.min((availW - 18) / cols, (availH - 18) / rows));
+
+            wrap.style.width = `${cellSize * cols + 16}px`;
+            wrap.style.height = `${cellSize * rows + 16}px`;
+
+            const fontSize = Math.max(16, Math.floor(cellSize * 0.56));
+            document.querySelectorAll('.board-tile').forEach(tile => {
+                tile.style.fontSize = `${fontSize}px`;
+            });
         }
 
         renderWordChips() {
@@ -1260,59 +1456,74 @@
                 const chip = document.createElement('div');
                 chip.className = 'word-chip-casual';
                 chip.id = 'chip-' + w;
-                chip.textContent = w;
+                if (this.mode === 'mystery') {
+                    chip.textContent = `${w[0]}${'_'.repeat(w.length - 1)} (${w.length})`;
+                } else {
+                    chip.textContent = w;
+                }
                 container.appendChild(chip);
             });
         }
 
-        useHint() {
-            if (this.hintsLeft <= 0) { alert('No te quedan pistas en esta partida.'); return; }
+        useLetterHint() {
             const missing = this.puzzle.placedWords.filter(p => !this.found.has(p.word));
             if (missing.length === 0) return;
+
+            const p = Storage.getProfile();
+            if ((p.freeHints || 0) > 0) {
+                p.freeHints--;
+                Storage.saveProfile(p);
+            } else {
+                if (!Storage.spendCoins(100)) {
+                    alert('Necesitas 100 monedas 🪙 para usar una pista.');
+                    return;
+                }
+            }
+            this.renderHubInfo();
 
             const target = missing[Math.floor(Math.random() * missing.length)];
             const tile = document.querySelector(`.board-tile[data-r="${target.start.r}"][data-c="${target.start.c}"]`);
             if (tile) {
                 sound.playHint();
-                this.hintsLeft--;
-                document.getElementById('hint-count-badge').textContent = this.hintsLeft;
                 tile.classList.add('tile-hint-flash');
-                setTimeout(() => tile.classList.remove('tile-hint-flash'), 3000);
+                setTimeout(() => tile.classList.remove('tile-hint-flash'), 3500);
             }
+        }
+
+        useWordBolt() {
+            const missing = this.puzzle.placedWords.filter(p => !this.found.has(p.word));
+            if (missing.length === 0) return;
+            if (!Storage.spendCoins(200)) {
+                alert('Necesitas 200 monedas 🪙 para usar el Rayo Revelador ⚡.');
+                return;
+            }
+            this.renderHubInfo();
+            sound.playWordSuccess();
+            const target = missing[Math.floor(Math.random() * missing.length)];
+            this.claim(target.word, target.cells, 'me');
+            this.checkGameOver();
         }
 
         bindGridEvents() {
             const board = document.getElementById('puzzle-board');
-
             const getTile = (x, y) => {
                 const el = document.elementFromPoint(x, y);
-                if (el && el.classList.contains('board-tile')) {
-                    return { r: parseInt(el.dataset.r), c: parseInt(el.dataset.c) };
-                }
+                if (el && el.classList.contains('board-tile')) return { r: parseInt(el.dataset.r), c: parseInt(el.dataset.c) };
                 return null;
             };
-
             const onStart = (x, y) => {
                 const t = getTile(x, y);
                 if (!t) return;
-                this.isDragging = true;
-                this.startCell = t;
-                this.selectedCells = [t];
-                this.paintLiveDragLine(t, t);
-                sound.playSelect();
+                this.isDragging = true; this.startCell = t; this.selectedCells = [t];
+                this.paintLiveDragLine(t, t); sound.playSelect();
             };
-
             const onMove = (x, y) => {
                 if (!this.isDragging || !this.startCell) return;
                 const cur = getTile(x, y);
                 if (!cur) return;
-
                 if (cur.r === this.startCell.r && cur.c === this.startCell.c) {
-                    this.selectedCells = [this.startCell];
-                    this.paintLiveDragLine(this.startCell, this.startCell);
-                    return;
+                    this.selectedCells = [this.startCell]; this.paintLiveDragLine(this.startCell, this.startCell); return;
                 }
-
                 const line = Generator.getLineCells(this.startCell.r, this.startCell.c, cur.r, cur.c);
                 if (line) {
                     const prevCount = this.selectedCells.length;
@@ -1321,48 +1532,28 @@
                     this.paintLiveDragLine(this.startCell, cur);
                 }
             };
-
             const onEnd = () => {
                 if (!this.isDragging) return;
-                this.isDragging = false;
-                this.hideLiveDragLine();
-                this.checkSelectedWord();
-                this.startCell = null;
-                this.selectedCells = [];
+                this.isDragging = false; this.hideLiveDragLine(); this.checkSelectedWord();
+                this.startCell = null; this.selectedCells = [];
             };
 
             board.addEventListener('mousedown', (e) => { e.preventDefault(); onStart(e.clientX, e.clientY); });
             window.addEventListener('mousemove', (e) => { if (this.isDragging) { e.preventDefault(); onMove(e.clientX, e.clientY); } });
             window.addEventListener('mouseup', () => { if (this.isDragging) onEnd(); });
 
-            board.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    e.preventDefault();
-                    onStart(e.touches[0].clientX, e.touches[0].clientY);
-                }
-            }, { passive: false });
-
-            window.addEventListener('touchmove', (e) => {
-                if (this.isDragging && e.touches.length === 1) {
-                    e.preventDefault();
-                    onMove(e.touches[0].clientX, e.touches[0].clientY);
-                }
-            }, { passive: false });
-
+            board.addEventListener('touchstart', (e) => { if (e.touches.length === 1) { e.preventDefault(); onStart(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
+            window.addEventListener('touchmove', (e) => { if (this.isDragging && e.touches.length === 1) { e.preventDefault(); onMove(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
             window.addEventListener('touchend', () => { if (this.isDragging) onEnd(); });
         }
 
         paintLiveDragLine(cellA, cellB) {
             const dragLine = document.getElementById('active-drag-line');
             if (!dragLine) return;
-
-            dragLine.setAttribute('x1', cellA.c * 100 + 50);
-            dragLine.setAttribute('y1', cellA.r * 100 + 50);
-            dragLine.setAttribute('x2', cellB.c * 100 + 50);
-            dragLine.setAttribute('y2', cellB.r * 100 + 50);
+            dragLine.setAttribute('x1', cellA.c * 100 + 50); dragLine.setAttribute('y1', cellA.r * 100 + 50);
+            dragLine.setAttribute('x2', cellB.c * 100 + 50); dragLine.setAttribute('y2', cellB.r * 100 + 50);
             dragLine.setAttribute('visibility', 'visible');
 
-            // Resaltar texto blanco sobre línea azul
             document.querySelectorAll('.board-tile.is-selecting').forEach(t => t.classList.remove('is-selecting'));
             this.selectedCells.forEach(c => {
                 const el = document.querySelector(`.board-tile[data-r="${c.r}"][data-c="${c.c}"]`);
@@ -1381,25 +1572,16 @@
             const dragLine = document.getElementById('active-drag-line');
             if (!svgEl || !cells || cells.length === 0) return;
 
-            const start = cells[0];
-            const end = cells[cells.length - 1];
-
+            const start = cells[0], end = cells[cells.length - 1];
             const pill = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            pill.setAttribute('x1', start.c * 100 + 50);
-            pill.setAttribute('y1', start.r * 100 + 50);
-            pill.setAttribute('x2', end.c * 100 + 50);
-            pill.setAttribute('y2', end.r * 100 + 50);
-            pill.setAttribute('stroke', colorHex);
-            pill.setAttribute('stroke-width', '74');
-            pill.setAttribute('stroke-linecap', 'round');
-
-            // Insertar debajo de la línea de arrastre activa
+            pill.setAttribute('x1', start.c * 100 + 50); pill.setAttribute('y1', start.r * 100 + 50);
+            pill.setAttribute('x2', end.c * 100 + 50); pill.setAttribute('y2', end.r * 100 + 50);
+            pill.setAttribute('stroke', colorHex); pill.setAttribute('stroke-width', '74'); pill.setAttribute('stroke-linecap', 'round');
             svgEl.insertBefore(pill, dragLine);
         }
 
         checkSelectedWord() {
             if (!this.selectedCells || this.selectedCells.length < 2) return;
-
             let fwd = '';
             this.selectedCells.forEach(c => { fwd += this.puzzle.grid[c.r][c.c]; });
             const bwd = fwd.split('').reverse().join('');
@@ -1412,6 +1594,11 @@
                 sound.playWordSuccess();
                 this.claim(matched, this.selectedCells, 'me');
                 if (this.mode === 'multi') this.multiplayer.sendWord(matched, this.selectedCells);
+                if (this.mode === 'blitz') {
+                    this.seconds += 8;
+                    this.blitzScore += 50;
+                    document.getElementById('top-hud-title').textContent = `⚡ Blitz (${this.blitzScore} pts)`;
+                }
                 this.checkGameOver();
             } else {
                 sound.playError();
@@ -1420,63 +1607,82 @@
 
         claim(word, cells, who) {
             this.found.set(word, { who, cells });
-
-            // Dibujar cápsula pastel continua
-            const color = who === 'me'
-                ? PASTEL_CAPSULE_COLORS[this.colorIndex % PASTEL_CAPSULE_COLORS.length]
-                : '#fbbf24';
+            const color = who === 'me' ? PASTEL_CAPSULE_COLORS[this.colorIndex % PASTEL_CAPSULE_COLORS.length] : '#fbbf24';
             this.colorIndex++;
             this.drawPermanentCapsule(cells, color);
 
             const chip = document.getElementById('chip-' + word);
-            if (chip) chip.classList.add(who === 'me' ? 'found-me' : 'found-rival');
-
+            if (chip) {
+                chip.textContent = word; // Revela si era modo misterio
+                chip.classList.add(who === 'me' ? 'found-me' : 'found-rival');
+            }
             if (this.mode === 'multi') this.updateMultiScore();
         }
 
         checkGameOver() {
             if (this.found.size >= this.puzzle.wordsToFind.length) {
+                if (this.mode === 'blitz') {
+                    this.seconds += 15;
+                    this.blitzScore += 150;
+                    setTimeout(() => this.loadNextBlitzBoard(), 300);
+                    return;
+                }
+
                 this.stopTimer();
                 if (window.confetti) window.confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
 
                 if (this.mode === 'adventure' && this.currentLevel) {
-                    const timeBonus = Math.max(0, 300 - (this.seconds * 3));
-                    const hintBonus = this.hintsLeft * 50;
                     const stars = this.seconds <= 45 ? 3 : (this.seconds <= 90 ? 2 : 1);
-                    const totalGained = this.currentLevel.reward.basePoints + timeBonus + hintBonus;
+                    const scoreGained = this.currentLevel.reward.basePoints + Math.max(0, 200 - this.seconds * 2);
+                    const coinsEarned = 100 + (stars * 25);
 
                     Storage.unlockCard(this.currentLevel.reward.id);
                     Storage.saveAdventureProgress(this.currentLevel.id, stars);
-                    Storage.addScore(totalGained);
+                    Storage.addScoreAndCoins(scoreGained, coinsEarned);
                     this.renderHubInfo();
 
                     sound.playCardUnlock();
-                    this.showLevelRewardModal(this.currentLevel.reward, stars, totalGained);
+                    this.showLevelRewardModal(this.currentLevel.reward, stars, coinsEarned);
+                } else if (this.mode === 'daily') {
+                    sound.playCardUnlock();
+                    const daily = Storage.getDailyState();
+                    const today = getTodayDateKey();
+                    if (daily.lastCompletedDate !== today) {
+                        daily.lastCompletedDate = today;
+                        daily.streak = (daily.streak || 0) + 1;
+                        Storage.saveDailyState(daily);
+                        Storage.addScoreAndCoins(600, 500);
+                        alert('🎉 ¡DESAFÍO DIARIO COMPLETADO!\nGanaste +500 Monedas 🪙 y aumentaste tu Racha Diaria 🔥.');
+                    } else {
+                        alert('¡Desafío repasado con éxito!');
+                    }
+                    this.renderHubInfo();
+                    this.renderDailyScreen();
+                    this.nav('daily');
+                } else if (this.mode === 'mystery') {
+                    sound.playCardUnlock();
+                    Storage.addScoreAndCoins(600, 300);
+                    this.renderHubInfo();
+                    setTimeout(() => { alert(`🙈 ¡MISTERIO RESUELTO en ${this.fmtTime(this.seconds)}!\n+600 pts y +300 🪙`); this.startMysteryMode(); }, 350);
                 } else if (this.mode === 'classic') {
                     sound.playWordSuccess();
-                    const earned = this.classicDiff === 'dificil' ? 450 : (this.classicDiff === 'medio' ? 300 : 200);
-                    Storage.addScore(earned);
+                    const coins = this.classicDiff === 'dificil' ? 180 : (this.classicDiff === 'medio' ? 120 : 80);
+                    Storage.addScoreAndCoins(coins * 2, coins);
                     this.renderHubInfo();
-                    setTimeout(() => {
-                        alert(`🎉 ¡Sopa completada en ${this.fmtTime(this.seconds)}!\n+${earned} monedas para tu Ranking.`);
-                        this.startClassicGame(this.classicCategory);
-                    }, 400);
+                    setTimeout(() => { alert(`🎲 ¡Sopa completada en ${this.fmtTime(this.seconds)}!\n+${coins} 🪙`); this.startClassicGame(this.classicCategory); }, 350);
                 } else if (this.mode === 'multi') {
                     sound.playWordSuccess();
                     let my = 0, riv = 0;
                     this.found.forEach(v => { if (v.who === 'me') my++; else riv++; });
                     const won = my > riv;
-                    if (won) Storage.addScore(500);
+                    if (won) Storage.addScoreAndCoins(500, 250);
                     this.renderHubInfo();
-                    setTimeout(() => {
-                        alert(won ? `👑 ¡Victoria! Ganaste ${my} a ${riv} (+500 pts)` : `¡Buen intento! Resultado: ${my} a ${riv}`);
-                        this.nav('menu');
-                    }, 400);
+                    setTimeout(() => { alert(won ? `👑 ¡Victoria ${my}-${riv}! +250 🪙` : `Resultado: ${my}-${riv}`); this.nav('menu'); }, 350);
                 }
             }
         }
 
-        showLevelRewardModal(reward, stars, points) {
+        showLevelRewardModal(reward, stars, coins) {
             document.getElementById('reward-modal-title').textContent = '🎉 ¡NIVEL SUPERADO!';
             document.getElementById('reward-card-img').src = reward.image;
             document.getElementById('reward-card-name').textContent = reward.name;
@@ -1484,7 +1690,7 @@
             document.getElementById('reward-card-desc').textContent = reward.context;
             document.getElementById('reward-card-rarity').textContent = reward.rarity;
             document.getElementById('reward-card-rarity').style.color = reward.rarityColor;
-            document.getElementById('reward-points-badge').textContent = `+${points.toLocaleString()} 🪙`;
+            document.getElementById('reward-points-badge').textContent = `+${coins} 🪙`;
 
             const starWrap = document.getElementById('reward-stars-container');
             starWrap.classList.remove('hidden');
@@ -1497,7 +1703,6 @@
         startMultiGame(data) {
             this.mode = 'multi';
             this.puzzle = data.puzzle;
-            this.hintsLeft = 1;
             document.getElementById('game-hud-multi').classList.remove('hidden');
             document.getElementById('top-hud-title').textContent = 'Duelo 1 vs 1';
             document.getElementById('game-theme-banner').textContent = '⚔️ EN VIVO';
@@ -1523,16 +1728,6 @@
             document.getElementById('hud-rival-pts').textContent = riv;
         }
 
-        spawnEmoji(emoji, fromMe) {
-            const el = document.createElement('div');
-            el.className = 'floating-emoji';
-            el.textContent = emoji;
-            el.style.left = fromMe ? '30vw' : '65vw';
-            el.style.top = '45vh';
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 2100);
-        }
-
         startTimer() {
             this.seconds = 0;
             const disp = document.getElementById('hud-time-display');
@@ -1545,15 +1740,8 @@
             }, 1000);
         }
 
-        stopTimer() {
-            if (this.timer) { clearInterval(this.timer); this.timer = null; }
-        }
-
-        fmtTime(s) {
-            const m = Math.floor(s / 60).toString().padStart(2, '0');
-            const sec = (s % 60).toString().padStart(2, '0');
-            return `${m}:${sec}`;
-        }
+        stopTimer() { if (this.timer) { clearInterval(this.timer); this.timer = null; } }
+        fmtTime(s) { return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
     }
 
     window.addEventListener('DOMContentLoaded', () => {

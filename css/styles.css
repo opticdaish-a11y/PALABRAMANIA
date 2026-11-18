@@ -1,4 +1,4 @@
-/* css/styles.css - Diseño Casual Móvil Vibrante (Inspirado en títulos modernos de Sopa de Letras) */
+/* css/styles.css - Diseño Casual Móvil Vibrante de Pantalla Completa */
 
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -17,10 +17,9 @@
 
 body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    /* Fondo escénico vibrante de naturaleza (montañas y lago) con fallback degradado cálido */
-    background-color: #1e3a2f;
-    background-image: 
-        linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.1) 45%, rgba(15, 23, 42, 0.45) 100%),
+    background-color: #1a332a;
+    background-image:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.22) 0%, rgba(15, 23, 42, 0.08) 45%, rgba(15, 23, 42, 0.45) 100%),
         url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80');
     background-size: cover;
     background-position: center;
@@ -35,6 +34,7 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    transition: background-image 0.4s ease;
 }
 
 .font-game, h1, h2, h3 {
@@ -42,13 +42,13 @@ body {
 }
 
 /* =========================================
-   BOTONES 3D ESTILO ARCADE CASUAL (VERDES)
+   BOTONES 3D ESTILO ARCADE CASUAL
    ========================================= */
 .btn-arcade-green {
     background: linear-gradient(180deg, var(--green-btn-top) 0%, var(--green-btn-bot) 100%);
     color: #ffffff;
-    border: 2px solid rgba(255, 255, 255, 0.35);
-    box-shadow: 0 5px 0 var(--green-btn-shadow), 0 8px 18px rgba(0, 0, 0, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 5px 0 var(--green-btn-shadow), 0 8px 20px rgba(0, 0, 0, 0.35);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     transition: transform 0.1s ease, box-shadow 0.1s ease;
     cursor: pointer;
@@ -60,12 +60,12 @@ body {
 }
 
 .btn-circle-green {
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     background: linear-gradient(180deg, #5ce62e 0%, #22ad12 100%);
     color: #ffffff;
-    border: 2px solid rgba(255, 255, 255, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.45);
     box-shadow: 0 4px 0 #157a09, 0 6px 12px rgba(0, 0, 0, 0.3);
     display: flex;
     align-items: center;
@@ -73,6 +73,7 @@ body {
     transition: transform 0.1s ease, box-shadow 0.1s ease;
     cursor: pointer;
     position: relative;
+    flex-shrink: 0;
 }
 
 .btn-circle-green:active {
@@ -81,56 +82,56 @@ body {
 }
 
 .btn-circle-green.lg {
-    width: 52px;
-    height: 52px;
+    width: 58px;
+    height: 58px;
 }
 
-/* Píldora de Monedas / Puntos en Header */
 .coins-pill {
-    background: rgba(15, 23, 42, 0.72);
+    background: rgba(15, 23, 42, 0.78);
     backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
     border-radius: 9999px;
-    padding: 4px 12px 4px 14px;
+    padding: 5px 12px 5px 14px;
     color: #ffffff;
     font-weight: 800;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+    cursor: pointer;
 }
 
 /* =========================================
-   CONTENEDOR PRINCIPAL CON SCROLL CONTROLADO
+   CONTENEDOR PRINCIPAL FULL-WIDTH EN MÓVIL
    ========================================= */
 .app-main {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     margin: 0 auto;
-    padding: 6px 12px 10px 12px;
+    padding: 4px 8px 6px 8px;
 }
 
-/* Scrollbar invisible pero funcional */
 .app-main::-webkit-scrollbar {
     width: 0px;
     background: transparent;
 }
 
 /* =========================================
-   TABLERO BLANCO CON CÁPSULAS DE COLORES
+   TARJETA DE PALABRAS + TABLERO GRANDE
    ========================================= */
 .word-bank-card {
     background: #ffffff;
     border-radius: 1.25rem;
     overflow: hidden;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28);
-    border: 2px solid rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.95);
     width: 100%;
     flex-shrink: 0;
 }
@@ -140,7 +141,7 @@ body {
     color: #ffffff;
     font-family: 'Fredoka', sans-serif;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     text-align: center;
@@ -151,18 +152,18 @@ body {
 .word-chip-casual {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     letter-spacing: 0.03em;
     padding: 2px 8px;
     border-radius: 9999px;
-    color: #1e293b;
+    color: #0f172a;
     transition: all 0.25s ease;
 }
 
 .word-chip-casual.found-me {
     color: #94a3b8;
     text-decoration: line-through;
-    opacity: 0.65;
+    opacity: 0.6;
 }
 
 .word-chip-casual.found-rival {
@@ -171,16 +172,13 @@ body {
     text-decoration: line-through;
 }
 
-/* Tablero Blanco Central */
+/* Tablero Blanco Central Dimensionado Dinámicamente */
 .puzzle-board-wrap {
     position: relative;
     background: #ffffff;
-    border-radius: 1.5rem;
-    padding: 10px;
-    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35), inset 0 0 0 2px rgba(255, 255, 255, 0.8);
-    width: 100%;
-    max-width: 440px;
-    aspect-ratio: 1 / 1;
+    border-radius: 1.4rem;
+    padding: 8px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.36), inset 0 0 0 2px rgba(255, 255, 255, 0.9);
     margin: auto;
     touch-action: none;
     user-select: none;
@@ -189,9 +187,9 @@ body {
 
 .board-svg-overlay {
     position: absolute;
-    inset: 10px;
-    width: calc(100% - 20px);
-    height: calc(100% - 20px);
+    inset: 8px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
     pointer-events: none;
     z-index: 1;
 }
@@ -211,67 +209,115 @@ body {
     justify-content: center;
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 800;
-    font-size: clamp(1rem, 4.4vw, 1.55rem);
     color: #0f172a;
     cursor: pointer;
     position: relative;
     border-radius: 50%;
-    transition: color 0.15s ease, transform 0.1s ease;
+    transition: color 0.12s ease, transform 0.1s ease;
+    line-height: 1;
 }
 
 .board-tile.is-selecting {
     color: #ffffff !important;
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 .board-tile.tile-hint-flash {
     background-color: #3b82f6;
     color: #ffffff !important;
-    animation: hintBounce 0.6s infinite alternate;
+    animation: hintBounce 0.55s infinite alternate;
     z-index: 5;
 }
 
 @keyframes hintBounce {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-    100% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.75); }
+    100% { transform: scale(1.14); box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
 }
 
 /* =========================================
-   TARJETAS BLANCAS DE MENÚ Y AVENTURA
+   TARJETAS BLANCAS & ESPIRAL DE CALENDARIO
    ========================================= */
 .casual-card {
-    background: rgba(255, 255, 255, 0.96);
-    border-radius: 1.5rem;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 1.4rem;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
     color: #1e293b;
 }
 
 .avatar-frame-wood {
-    width: 86px;
-    height: 86px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     background: linear-gradient(145deg, #fef3c7, #fde68a);
     border: 5px solid #b45309;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35), inset 0 2px 5px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35), inset 0 2px 5px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.8rem;
-    margin: -43px auto 8px auto;
+    font-size: 3.2rem;
+    margin: -48px auto 10px auto;
     position: relative;
+}
+
+/* Tarjeta Calendario del Desafío Diario */
+.calendar-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 16px 35px rgba(0, 0, 0, 0.35);
+    position: relative;
+    overflow: visible;
+    margin-top: 14px;
+}
+
+.calendar-header-red {
+    background: linear-gradient(180deg, #f87171 0%, #dc2626 100%);
+    color: #ffffff;
+    border-radius: 1.5rem 1.5rem 0 0;
+    padding: 18px 16px 12px 16px;
+    text-align: center;
+    position: relative;
+}
+
+.calendar-rings {
+    position: absolute;
+    top: -11px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-evenly;
+    padding: 0 18px;
+}
+
+.calendar-ring {
+    width: 11px;
+    height: 24px;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    border-radius: 9999px;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.calendar-date-ribbon {
+    background: #60a5fa;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.78rem;
+    padding: 3px 16px;
+    border-radius: 0 0 12px 12px;
+    display: inline-block;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
 }
 
 /* =========================================
    BARRA DE NAVEGACIÓN INFERIOR (BOTTOM DOCK)
    ========================================= */
 .bottom-nav-dock {
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.98) 100%);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.98) 100%);
     backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
     display: flex;
     justify-content: space-around;
     align-items: stretch;
-    height: 64px;
+    height: 70px;
     width: 100%;
     z-index: 40;
     flex-shrink: 0;
@@ -284,7 +330,7 @@ body {
     align-items: center;
     justify-content: center;
     color: #94a3b8;
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -293,8 +339,8 @@ body {
 }
 
 .bottom-nav-item .nav-icon {
-    font-size: 1.45rem;
-    line-height: 1.2;
+    font-size: 1.55rem;
+    line-height: 1.15;
     margin-bottom: 2px;
     transition: transform 0.2s ease;
 }
@@ -302,9 +348,9 @@ body {
 .bottom-nav-item.active {
     background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
     color: #ffffff;
-    border-radius: 0.75rem 0.75rem 0 0;
-    margin-top: -6px;
-    box-shadow: 0 -4px 15px rgba(245, 158, 11, 0.4);
+    border-radius: 0.85rem 0.85rem 0 0;
+    margin-top: -7px;
+    box-shadow: 0 -4px 16px rgba(245, 158, 11, 0.45);
 }
 
 .bottom-nav-item.active .nav-icon {
@@ -312,12 +358,12 @@ body {
 }
 
 /* =========================================
-   MODO AVENTURA, ÁLBUM Y RANKING (ESTILO CLARO)
+   AVENTURA, ÁLBUM Y REGALO DIARIO
    ========================================= */
 .level-card-casual {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     border-radius: 1.15rem;
-    padding: 12px 14px;
+    padding: 13px 15px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -339,7 +385,7 @@ body {
 }
 
 .album-card-casual.unlocked:active { transform: scale(0.97); }
-.album-card-casual.locked { opacity: 0.78; cursor: default; }
+.album-card-casual.locked { opacity: 0.8; cursor: default; }
 
 .album-card-img-wrap {
     position: relative;
@@ -360,11 +406,35 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 23, 42, 0.7);
+    background: rgba(15, 23, 42, 0.72);
     font-size: 1.8rem;
 }
 
-/* Reacciones flotantes */
+.gift-box-btn {
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+.gift-box-btn:hover {
+    transform: scale(1.1) rotate(-3deg);
+}
+.gift-box-btn:active {
+    transform: scale(0.94);
+}
+
+/* Cost badge debajo/sobre botones circulares */
+.cost-tag {
+    position: absolute;
+    bottom: -6px;
+    background: rgba(15, 23, 42, 0.9);
+    color: #fde047;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+}
+
 @keyframes floatEmojiAnim {
     0% { opacity: 0; transform: translateY(20px) scale(0.5); }
     20% { opacity: 1; transform: translateY(0) scale(1.3); }

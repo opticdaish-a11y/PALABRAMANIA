@@ -24,35 +24,35 @@
 <body>
 
     <!-- ==================== BARRA SUPERIOR COMPACTA (TOP HUD) ==================== -->
-    <header class="w-full max-w-[480px] mx-auto px-3 pt-2.5 pb-1 flex items-center justify-between z-30 flex-shrink-0">
-        <!-- Izquierda: Botón Volver y Sonido -->
+    <header class="w-full max-w-[520px] mx-auto px-2.5 pt-2 pb-1 flex items-center justify-between z-30 flex-shrink-0">
+        <!-- Izquierda: Botón Volver y Ajustes/Música -->
         <div class="flex items-center space-x-2">
             <button id="btn-top-back" class="btn-circle-green hidden" title="Volver">
                 <span class="text-xl font-black leading-none">←</span>
             </button>
-            <button id="btn-sound-toggle" class="btn-circle-green" title="Música y Sonido">
-                <span id="sound-icon" class="text-lg">🎵</span>
+            <button id="btn-sound-toggle" class="btn-circle-green" title="Ajustes, Música y Fondos">
+                <span id="sound-icon" class="text-lg">⚙️</span>
             </button>
         </div>
 
-        <!-- Centro: Título de Nivel (Visible en Juego) -->
+        <!-- Centro: Título de Nivel o Modo (Visible en Juego) -->
         <div id="top-hud-level-info" class="hidden text-center">
-            <div id="top-hud-title" class="text-white font-game font-bold text-lg leading-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]">
+            <div id="top-hud-title" class="text-white font-game font-bold text-xl leading-tight drop-shadow-[0_2px_3px_rgba(0,0,0,0.75)]">
                 Nivel 1
             </div>
-            <div id="top-hud-sub" class="text-[11px] font-bold text-white/95 bg-black/30 px-2.5 py-0.5 rounded-full backdrop-blur-sm inline-block">
+            <div id="top-hud-sub" class="text-xs font-bold text-white bg-black/40 px-3 py-0.5 rounded-full backdrop-blur-sm inline-block">
                 ⏱️ <span id="hud-time-display">00:00</span>
             </div>
         </div>
 
-        <!-- Derecha: Píldora de Puntos + Botón Perfil -->
-        <div class="flex items-center space-x-2">
-            <div class="coins-pill">
-                <span id="header-score" class="font-mono">0</span>
+        <!-- Derecha: Píldora de Monedas + Tienda -->
+        <div class="flex items-center space-x-1.5">
+            <div class="coins-pill" id="btn-coins-pill" title="Tus Monedas">
+                <span id="header-score" class="font-mono">250</span>
                 <span class="text-amber-400 text-base leading-none">🪙</span>
             </div>
-            <button id="btn-profile-card" class="btn-circle-green" title="Perfil">
-                <span id="header-avatar" class="text-xl">🦊</span>
+            <button id="btn-shop-open" class="btn-circle-green" title="Tienda y Fondos">
+                <span class="text-lg">🛒</span>
             </button>
         </div>
     </header>
@@ -61,35 +61,58 @@
     <main class="app-main">
 
         <!-- ==================== PANTALLA 1: HOGAR / HUB PRINCIPAL ==================== -->
-        <section id="screen-menu" class="app-screen flex flex-col justify-between h-full py-2">
-            <!-- Espacio superior escénico para que se aprecie el paisaje de montañas -->
-            <div class="flex-1 flex flex-col justify-center items-center pt-8">
-                
-                <!-- Tarjeta Central de Jugador (Inspirada en la captura de referencia) -->
-                <div class="casual-card w-full p-4 pt-2 text-center relative mt-8">
-                    <!-- Avatar flotante con marco de madera/oro -->
-                    <div class="avatar-frame-wood cursor-pointer" onclick="document.getElementById('btn-profile-card').click()">
+        <section id="screen-menu" class="app-screen flex flex-col justify-between h-full py-1">
+            <!-- Accesos rápidos en la esquina superior izquierda (como la captura de referencia) -->
+            <div class="flex justify-between items-start px-1 pt-1">
+                <div class="flex flex-col space-y-2">
+                    <button id="btn-hub-blitz" class="flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-b from-amber-400 to-orange-600 border-2 border-white/60 shadow-lg flex items-center justify-center text-2xl">
+                            ⚡
+                        </div>
+                        <span class="text-[10px] font-black text-white bg-black/60 px-2 rounded-full mt-0.5">Blitz 60s</span>
+                    </button>
+                    <button id="btn-hub-mystery" class="flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-b from-purple-400 to-indigo-700 border-2 border-white/60 shadow-lg flex items-center justify-center text-2xl">
+                            🙈
+                        </div>
+                        <span class="text-[10px] font-black text-white bg-black/60 px-2 rounded-full mt-0.5">Misterio</span>
+                    </button>
+                </div>
+
+                <button id="btn-hub-themes" class="flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-b from-cyan-400 to-blue-600 border-2 border-white/60 shadow-lg flex items-center justify-center text-2xl">
+                        🖼️
+                    </div>
+                    <span class="text-[10px] font-black text-white bg-black/60 px-2 rounded-full mt-0.5">Fondos</span>
+                </button>
+            </div>
+
+            <!-- Tarjeta Central de Jugador -->
+            <div class="flex flex-col justify-center items-center my-auto py-2">
+                <div class="casual-card w-full p-4 pt-2 text-center relative mt-10">
+                    <!-- Avatar flotante con marco de madera -->
+                    <div class="avatar-frame-wood cursor-pointer" id="btn-profile-card">
                         <span id="hub-avatar">🦊</span>
-                        <span class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center border-2 border-white shadow">✏️</span>
+                        <span class="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center border-2 border-white shadow">✏️</span>
                     </div>
 
-                    <h2 class="text-lg font-extrabold text-slate-800">
+                    <h2 class="text-xl font-extrabold text-slate-800">
                         ¡Hola, <span id="hub-player-name" class="text-emerald-600">CAZAPALABRAS</span>!
                     </h2>
-                    <div id="hub-rank-badge" class="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-2">
+                    <div id="hub-rank-badge" class="text-xs font-bold text-amber-600 uppercase tracking-wider mb-2.5">
                         Rango: Novato
                     </div>
 
                     <!-- Barra de Progreso del Mundo -->
-                    <div class="bg-blue-50/90 rounded-2xl p-3 border border-blue-100">
-                        <div class="text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1.5">
+                    <div class="bg-blue-50/95 rounded-2xl p-3 border border-blue-100">
+                        <div id="hub-world-name" class="text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1.5">
                             EXPEDICIÓN SALVAJE
                         </div>
                         <div class="flex items-center space-x-2">
                             <div class="flex-1 bg-slate-200 h-5 rounded-full overflow-hidden relative border border-slate-300">
-                                <div id="hub-world-bar" class="bg-gradient-to-r from-emerald-400 to-green-500 h-full transition-all duration-500" style="width: 12%"></div>
-                                <span id="hub-world-progress-text" class="absolute inset-0 flex items-center justify-center text-[11px] font-black text-slate-800">
-                                    1 / 8
+                                <div id="hub-world-bar" class="bg-gradient-to-r from-emerald-400 to-green-500 h-full transition-all duration-500" style="width: 10%"></div>
+                                <span id="hub-world-progress-text" class="absolute inset-0 flex items-center justify-center text-xs font-black text-slate-800">
+                                    1 / 12
                                 </span>
                             </div>
                             <span class="text-2xl leading-none">🎁</span>
@@ -98,50 +121,107 @@
                 </div>
 
                 <!-- Tarjeta de Racha Diaria -->
-                <div class="casual-card w-full p-3 mt-3 flex items-center justify-between px-5">
+                <div class="casual-card w-full p-3.5 mt-2.5 flex items-center justify-between px-4">
                     <div class="flex items-center space-x-3">
                         <span class="text-3xl">🔥</span>
                         <div class="text-left">
-                            <div class="text-sm font-extrabold text-slate-800">Racha de Aventura</div>
-                            <div id="hub-cards-count" class="text-[11px] font-bold text-slate-500">0/8 Cartas Rescatadas</div>
+                            <div class="text-sm font-extrabold text-slate-800">Racha Diaria</div>
+                            <div id="hub-cards-count" class="text-xs font-bold text-slate-500">0/12 Cartas Rescatadas</div>
                         </div>
                     </div>
-                    <span class="bg-amber-100 text-amber-700 font-black text-xs px-3 py-1 rounded-full border border-amber-200" id="hub-streak-badge">
-                        Nivel 1
-                    </span>
+                    <div class="text-right">
+                        <span id="hub-streak-days" class="bg-amber-100 text-amber-700 font-black text-xs px-3 py-1 rounded-full border border-amber-200 block">
+                            0 DÍAS
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Botones Flotantes Laterales + Botón Principal Gigante -->
-            <div class="w-full space-y-3 pb-2 pt-2">
-                <!-- Accesos rápidos en círculos -->
+            <!-- Botones Flotantes + Botón Principal Gigante -->
+            <div class="w-full space-y-3 pb-1">
                 <div class="flex justify-between items-center px-2">
-                    <button id="btn-quick-levels" class="flex flex-col items-center group">
-                        <div class="btn-circle-green lg bg-gradient-to-b from-amber-400 to-orange-500 border-amber-200" style="background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%); box-shadow: 0 4px 0 #92400e;">
+                    <button id="btn-open-daily-gift" class="flex flex-col items-center relative">
+                        <div class="btn-circle-green lg" style="background: linear-gradient(180deg, #f43f5e 0%, #be123c 100%); box-shadow: 0 4px 0 #881337;">
+                            <span class="text-2xl">🎁</span>
+                        </div>
+                        <span id="gift-ready-dot" class="hidden absolute top-0 right-0 w-4 h-4 bg-amber-300 rounded-full border-2 border-white animate-ping"></span>
+                        <span class="text-[11px] font-extrabold text-white drop-shadow mt-1">Regalo</span>
+                    </button>
+
+                    <button id="btn-quick-levels" class="flex flex-col items-center">
+                        <div class="btn-circle-green lg" style="background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%); box-shadow: 0 4px 0 #92400e;">
                             <span class="text-2xl">🗺️</span>
                         </div>
                         <span class="text-[11px] font-extrabold text-white drop-shadow mt-1">Niveles</span>
                     </button>
 
-                    <button id="btn-quick-custom" class="flex flex-col items-center group">
+                    <button id="btn-open-more-modes" class="flex flex-col items-center">
                         <div class="btn-circle-green lg" style="background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); box-shadow: 0 4px 0 #075985;">
-                            <span class="text-2xl">✏️</span>
+                            <span class="text-2xl">🎮</span>
                         </div>
-                        <span class="text-[11px] font-extrabold text-white drop-shadow mt-1">Crear Sopa</span>
+                        <span class="text-[11px] font-extrabold text-white drop-shadow mt-1">Más juegos</span>
                     </button>
                 </div>
 
-                <!-- BOTÓN VERDE PRINCIPAL: JUGAR NIVEL ACTUAL -->
-                <button id="btn-play-current-level" class="btn-arcade-green w-full py-3.5 rounded-full font-game text-2xl font-bold tracking-wide flex items-center justify-center space-x-2">
+                <!-- BOTÓN VERDE PRINCIPAL -->
+                <button id="btn-play-current-level" class="btn-arcade-green w-full py-4 rounded-full font-game text-2xl font-bold tracking-wide flex items-center justify-center shadow-2xl">
                     <span id="btn-play-level-text">Jugar nivel 1</span>
                 </button>
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 2: TABLERO DE JUEGO (MÁXIMO APROVECHAMIENTO) ==================== -->
-        <section id="screen-game" class="app-screen hidden flex flex-col justify-between h-full py-1 space-y-2">
+        <!-- ==================== PANTALLA 2: DESAFÍO DIARIO (ESTILO CALENDARIO) ==================== -->
+        <section id="screen-daily" class="app-screen hidden flex flex-col justify-between h-full py-3">
+            <div class="flex-1 flex flex-col justify-center">
+                <div class="calendar-card mx-1">
+                    <!-- Anillos blancos superiores del calendario -->
+                    <div class="calendar-rings">
+                        <div class="calendar-ring"></div>
+                        <div class="calendar-ring"></div>
+                        <div class="calendar-ring"></div>
+                        <div class="calendar-ring"></div>
+                        <div class="calendar-ring"></div>
+                        <div class="calendar-ring"></div>
+                    </div>
+
+                    <div class="calendar-header-red">
+                        <h2 class="font-game text-2xl font-bold tracking-wide">Desafío Diario</h2>
+                    </div>
+
+                    <div class="text-center">
+                        <span id="daily-date-ribbon" class="calendar-date-ribbon">mar 17 nov</span>
+                    </div>
+
+                    <div class="p-6 text-center space-y-4">
+                        <p id="daily-quote-text" class="text-lg font-semibold text-slate-800 leading-relaxed font-serif">
+                            "La ______ es un ____ cargada de futuro..."
+                        </p>
+                        <div class="border-t border-slate-200 w-3/4 mx-auto pt-3">
+                            <span id="daily-quote-author" class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+                                GABRIEL CELAYA
+                            </span>
+                        </div>
+                        <div id="daily-status-badge" class="hidden inline-block bg-emerald-100 text-emerald-700 text-xs font-black px-3 py-1 rounded-full">
+                            ✅ ¡Desafío de hoy completado! (+500 🪙)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center space-y-3 pb-2">
+                <p class="text-white text-sm font-bold drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] px-4">
+                    Hay una nueva cita cada día al azar. Próximo desafío en <span id="daily-countdown" class="font-mono text-amber-300">00:00:00</span>.
+                </p>
+                <button id="btn-play-daily" class="btn-arcade-green w-full py-4 rounded-full font-game text-2xl font-bold">
+                    Jugar ahora
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== PANTALLA 3: TABLERO DE JUEGO (MÁXIMO TAMAÑO) ==================== -->
+        <section id="screen-game" class="app-screen hidden flex flex-col justify-between h-full py-0.5 space-y-1.5">
             
-            <!-- HUD Multijugador (si es 1 vs 1) -->
+            <!-- HUD Multijugador (solo en 1 vs 1) -->
             <div id="game-hud-multi" class="hidden bg-white/95 rounded-2xl p-2 px-3 flex items-center justify-between shadow border border-white flex-shrink-0">
                 <div class="flex items-center space-x-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
@@ -156,67 +236,131 @@
                 </div>
             </div>
 
-            <!-- 1. TARJETA DE BANCO DE PALABRAS (Igual a la referencia) -->
+            <!-- 1. TARJETA DE BANCO DE PALABRAS -->
             <div class="word-bank-card">
                 <div id="game-theme-banner" class="word-bank-header">
                     EL REY DE LA SABANA
                 </div>
-                <div id="word-chips-container" class="p-2.5 flex flex-wrap justify-center gap-x-3 gap-y-1">
-                    <!-- Palabras en texto limpio y negrita -->
+                <div id="word-chips-container" class="p-2 flex flex-wrap justify-center gap-x-3 gap-y-0.5">
+                    <!-- Palabras en negrita -->
                 </div>
             </div>
 
-            <!-- 2. TABLERO BLANCO CENTRAL CON CÁPSULAS SVG -->
-            <div class="flex-1 flex items-center justify-center min-h-0">
-                <div class="puzzle-board-wrap">
-                    <!-- Capa de cápsulas pastel continuas (SVG) -->
-                    <svg id="board-svg-overlay" class="board-svg-overlay" preserveAspectRatio="none">
-                        <!-- Cápsulas de palabras encontradas y línea de arrastre en vivo -->
-                    </svg>
-                    <!-- Capa de letras en cuadrícula -->
-                    <div id="puzzle-board" class="puzzle-grid-layer">
-                        <!-- Letras generadas por JS -->
-                    </div>
+            <!-- 2. ESCENARIO CENTRAL DEL TABLERO (EXPANSIÓN MÁXIMA) -->
+            <div id="board-stage" class="flex-1 flex items-center justify-center min-h-0 w-full">
+                <div id="puzzle-board-wrap" class="puzzle-board-wrap">
+                    <svg id="board-svg-overlay" class="board-svg-overlay" preserveAspectRatio="none"></svg>
+                    <div id="puzzle-board" class="puzzle-grid-layer"></div>
                 </div>
             </div>
 
-            <!-- 3. BARRA INFERIOR DE ACCIONES (ACCESIBLE AL PULGAR) -->
-            <div class="flex items-center justify-around py-1.5 px-2 flex-shrink-0">
-                <button id="btn-game-levels" class="btn-circle-green" title="Mapa de Niveles">
-                    <span class="text-lg">🗺️</span>
+            <!-- 3. BARRA INFERIOR DE ACCIONES DEL JUEGO (6 BOTONES COMO LA REFERENCIA) -->
+            <div class="flex items-center justify-around py-1 px-1 flex-shrink-0">
+                <button id="btn-game-daily" class="btn-circle-green" title="Desafío Diario">
+                    <span class="text-lg">📅</span>
                 </button>
 
-                <button id="btn-game-classic" class="btn-circle-green" title="Partida al Azar">
-                    <span class="text-lg">🎲</span>
+                <button id="btn-game-modes" class="btn-circle-green" title="Modos de Juego">
+                    <span class="text-lg">🎮</span>
                 </button>
 
-                <!-- Reacciones (en multijugador) o Album -->
-                <button id="btn-game-album" class="btn-circle-green" title="Álbum de Cartas">
-                    <span class="text-lg">🖼️</span>
+                <button id="btn-game-gift" class="btn-circle-green" title="Regalo Diario">
+                    <span class="text-lg">🎁</span>
                 </button>
 
-                <!-- Botón Pista con costo/contador -->
-                <button id="btn-hint" class="btn-circle-green relative" title="Pista">
-                    <span class="text-xl">💡</span>
-                    <span id="hint-count-badge" class="absolute -bottom-1 -right-1 bg-amber-400 text-slate-900 text-[10px] font-black px-1.5 rounded-full border border-white shadow">
-                        3
-                    </span>
+                <!-- Power-up Rayo: Revela una palabra entera (200 monedas) -->
+                <button id="btn-power-bolt" class="btn-circle-green" title="Revelar Palabra Completa">
+                    <span class="text-lg">⚡</span>
+                    <span class="cost-tag">200🪙</span>
                 </button>
 
-                <!-- Botón Reiniciar / Nuevo Tablero Aleatorio -->
-                <button id="btn-shuffle-board" class="btn-circle-green" title="Regenerar Tablero">
-                    <span class="text-xl font-bold">↻</span>
+                <!-- Pista de 1ra Letra (Gratis o 100 monedas) -->
+                <button id="btn-hint" class="btn-circle-green" title="Pista 1ra Letra">
+                    <span class="text-lg">💡</span>
+                    <span id="hint-count-badge" class="cost-tag">3 gratis</span>
+                </button>
+
+                <button id="btn-shuffle-board" class="btn-circle-green" title="Mezclar Tablero">
+                    <span class="text-xl font-black">↻</span>
                 </button>
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 3: MODO CLÁSICO (AL AZAR) ==================== -->
+        <!-- ==================== PANTALLA 4: MÁS MODOS DE JUEGO ==================== -->
+        <section id="screen-modes" class="app-screen hidden space-y-3 py-2">
+            <div class="casual-card p-3.5 text-center">
+                <h2 class="text-xl font-extrabold text-slate-800">🎮 Modalidades de Juego</h2>
+                <p class="text-xs text-slate-500">Elige cómo quieres entrenar tu mente hoy</p>
+            </div>
+
+            <div class="space-y-2.5 pb-2">
+                <!-- Modo Clásico al Azar -->
+                <div id="btn-mode-classic" class="casual-card p-4 flex items-center justify-between cursor-pointer active:scale-98 transition">
+                    <div class="flex items-center space-x-3.5">
+                        <span class="text-4xl">🎲</span>
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-800">Modo Clásico (Al Azar)</h3>
+                            <p class="text-xs text-slate-500">6 categorías temáticas, tableros infinitos aleatorios.</p>
+                        </div>
+                    </div>
+                    <span class="btn-arcade-green px-4 py-1.5 rounded-full text-xs font-bold">Jugar</span>
+                </div>
+
+                <!-- Modo Blitz 60s Contrarreloj -->
+                <div id="btn-mode-blitz" class="casual-card p-4 flex items-center justify-between cursor-pointer active:scale-98 transition border-2 border-amber-300">
+                    <div class="flex items-center space-x-3.5">
+                        <span class="text-4xl">⚡</span>
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-800">Modo Blitz (60 seg)</h3>
+                            <p class="text-xs text-slate-500">¡Contrarreloj! Cada palabra encontrada te suma +8 seg.</p>
+                        </div>
+                    </div>
+                    <span class="btn-arcade-green px-4 py-1.5 rounded-full text-xs font-bold">Correr</span>
+                </div>
+
+                <!-- Modo Misterio (Palabras Ocultas) -->
+                <div id="btn-mode-mystery" class="casual-card p-4 flex items-center justify-between cursor-pointer active:scale-98 transition border-2 border-purple-300">
+                    <div class="flex items-center space-x-3.5">
+                        <span class="text-4xl">🙈</span>
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-800">Modo Misterio (Oculto)</h3>
+                            <p class="text-xs text-slate-500">Solo ves la inicial (L _ _ _). ¡Premio doble (+600 🪙)!</p>
+                        </div>
+                    </div>
+                    <span class="btn-arcade-green px-4 py-1.5 rounded-full text-xs font-bold">Reto</span>
+                </div>
+
+                <!-- Duelo 1 vs 1 Online -->
+                <div id="btn-mode-multi" class="casual-card p-4 flex items-center justify-between cursor-pointer active:scale-98 transition">
+                    <div class="flex items-center space-x-3.5">
+                        <span class="text-4xl">⚔️</span>
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-800">Duelo 1 vs 1 en Vivo</h3>
+                            <p class="text-xs text-slate-500">Compite por código contra un amigo en tiempo real.</p>
+                        </div>
+                    </div>
+                    <span class="btn-arcade-green px-4 py-1.5 rounded-full text-xs font-bold">Sala</span>
+                </div>
+
+                <!-- Creador Personalizado -->
+                <div id="btn-mode-creator" class="casual-card p-4 flex items-center justify-between cursor-pointer active:scale-98 transition">
+                    <div class="flex items-center space-x-3.5">
+                        <span class="text-4xl">✏️</span>
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-800">Crear Sopa Propia</h3>
+                            <p class="text-xs text-slate-500">Introduce tus propias palabras y juega al instante.</p>
+                        </div>
+                    </div>
+                    <span class="btn-arcade-green px-4 py-1.5 rounded-full text-xs font-bold">Crear</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== PANTALLA 5: MODO CLÁSICO (CATEGORÍAS AL AZAR) ==================== -->
         <section id="screen-categories" class="app-screen hidden space-y-3 py-2">
-            <div class="casual-card p-3 text-center">
+            <div class="casual-card p-3.5 text-center">
                 <h2 class="text-lg font-extrabold text-slate-800">🎲 Modo Clásico (Al Azar)</h2>
-                <p class="text-[11px] text-slate-500">Cada partida genera palabras y posiciones aleatorias</p>
-                
-                <!-- Selector de Dificultad -->
+                <p class="text-xs text-slate-500">Palabras y posiciones aleatorias cada vez</p>
                 <div class="flex justify-center space-x-1.5 bg-slate-100 p-1 rounded-xl mt-2.5">
                     <button data-diff="facil" class="classic-diff-pill flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-600 transition">Fácil</button>
                     <button data-diff="medio" class="classic-diff-pill flex-1 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white shadow transition active">Medio</button>
@@ -224,52 +368,44 @@
                 </div>
             </div>
 
-            <div id="classic-categories-grid" class="grid grid-cols-2 gap-2.5 pb-2">
-                <!-- Categorías inyectadas por JS -->
-            </div>
+            <div id="classic-categories-grid" class="grid grid-cols-2 gap-2.5 pb-2"></div>
         </section>
 
-        <!-- ==================== PANTALLA 4: MAPA DE AVENTURA (NIVELES) ==================== -->
+        <!-- ==================== PANTALLA 6: MAPA DE AVENTURA (12 NIVELES) ==================== -->
         <section id="screen-adventure" class="app-screen hidden space-y-3 py-2">
-            <div class="casual-card p-3 text-center">
-                <h2 class="text-lg font-extrabold text-slate-800">🗺️ Expedición Salvaje</h2>
-                <p class="text-[11px] text-emerald-600 font-bold">Rescata especies y desbloquea sus cartas HD</p>
+            <div class="casual-card p-3.5 text-center">
+                <h2 class="text-lg font-extrabold text-slate-800">🗺️ Mapa de Aventura</h2>
+                <p class="text-xs text-emerald-600 font-bold">2 Mundos • 12 Cartas Fotográficas HD por rescatar</p>
             </div>
-            <div id="adventure-levels-list" class="space-y-2.5 pb-2">
-                <!-- Niveles inyectados por JS -->
-            </div>
+            <div id="adventure-levels-list" class="space-y-2.5 pb-2"></div>
         </section>
 
-        <!-- ==================== PANTALLA 5: ÁLBUM DE COLECCIÓN ==================== -->
+        <!-- ==================== PANTALLA 7: ÁLBUM DE COLECCIÓN ==================== -->
         <section id="screen-album" class="app-screen hidden space-y-3 py-2">
-            <div class="casual-card p-3 flex items-center justify-between">
-                <h2 class="text-lg font-extrabold text-slate-800">📖 Álbum de Cartas</h2>
-                <span id="album-count" class="text-xs font-black bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">0/8</span>
+            <div class="casual-card p-3.5 flex items-center justify-between">
+                <h2 class="text-lg font-extrabold text-slate-800">📖 Álbum de Colección</h2>
+                <span id="album-count" class="text-xs font-black bg-amber-100 text-amber-700 px-3 py-1 rounded-full">0/12</span>
             </div>
-            <div id="album-grid" class="grid grid-cols-2 gap-2.5 pb-2">
-                <!-- Cartas inyectadas por JS -->
-            </div>
+            <div id="album-grid" class="grid grid-cols-2 gap-2.5 pb-2"></div>
         </section>
 
-        <!-- ==================== PANTALLA 6: RANKING GLOBAL ==================== -->
+        <!-- ==================== PANTALLA 8: RANKING GLOBAL ==================== -->
         <section id="screen-ranking" class="app-screen hidden space-y-3 py-2">
-            <div class="casual-card p-3 text-center">
+            <div class="casual-card p-3.5 text-center">
                 <h2 class="text-lg font-extrabold text-slate-800">🏆 Ranking Mundial</h2>
-                <p class="text-[11px] text-slate-500">Suma puntos en Aventura, Clásico y 1 vs 1</p>
+                <p class="text-xs text-slate-500">Suma monedas en todos los modos para subir al #1</p>
             </div>
-            <div id="ranking-list" class="space-y-2 pb-2">
-                <!-- Ranking inyectado por JS -->
-            </div>
+            <div id="ranking-list" class="space-y-2 pb-2"></div>
         </section>
 
-        <!-- ==================== PANTALLA 7: LOBBY MULTIJUGADOR ==================== -->
+        <!-- ==================== PANTALLA 9: LOBBY MULTIJUGADOR ==================== -->
         <section id="screen-lobby" class="app-screen hidden space-y-4 py-2">
             <div class="casual-card p-5 space-y-4 text-center">
                 <h2 class="text-xl font-extrabold text-slate-800">⚔️ Duelo 1 vs 1 en Vivo</h2>
 
                 <div id="lobby-init" class="space-y-4">
                     <p class="text-xs text-slate-500">Crea una sala privada o únete con el código de tu amigo para competir en el mismo tablero.</p>
-                    <button id="btn-host-room" class="btn-arcade-green w-full py-3 rounded-full font-bold text-base">
+                    <button id="btn-host-room" class="btn-arcade-green w-full py-3.5 rounded-full font-bold text-base">
                         ✨ Crear Nueva Sala
                     </button>
 
@@ -306,7 +442,7 @@
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 8: CREADOR PERSONALIZADO ==================== -->
+        <!-- ==================== PANTALLA 10: CREADOR PERSONALIZADO ==================== -->
         <section id="screen-creator" class="app-screen hidden space-y-3 py-2">
             <div class="casual-card p-5 space-y-4">
                 <h2 class="text-lg font-extrabold text-slate-800 text-center">✏️ Crear Sopa Propia</h2>
@@ -319,7 +455,7 @@
                         <label class="block text-xs font-bold text-slate-600 mb-1">Palabras (separadas por coma):</label>
                         <textarea id="custom-words" rows="4" placeholder="MAMA, PAPA, PERRO, GATO, CASA" required class="w-full bg-slate-100 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 uppercase focus:outline-none focus:border-emerald-500"></textarea>
                     </div>
-                    <button type="submit" class="btn-arcade-green w-full py-3 rounded-full font-bold text-base">
+                    <button type="submit" class="btn-arcade-green w-full py-3.5 rounded-full font-bold text-base">
                         ▶ Jugar Ahora
                     </button>
                 </form>
@@ -328,11 +464,12 @@
 
     </main>
 
-    <!-- ==================== BARRA INFERIOR DE NAVEGACIÓN (BOTTOM DOCK) ==================== -->
+    <!-- ==================== BARRA INFERIOR DE NAVEGACIÓN (5 PESTAÑAS) ==================== -->
     <nav id="bottom-nav-dock" class="bottom-nav-dock">
-        <div class="bottom-nav-item" data-nav="categories">
-            <span class="nav-icon">🎲</span>
-            <span>Clásico</span>
+        <div class="bottom-nav-item relative" data-nav="daily">
+            <span id="daily-nav-badge" class="hidden absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full shadow">Nueva</span>
+            <span class="nav-icon">📅</span>
+            <span>Desafío</span>
         </div>
         <div class="bottom-nav-item" data-nav="ranking">
             <span class="nav-icon">🏆</span>
@@ -346,25 +483,143 @@
             <span class="nav-icon">📖</span>
             <span>Álbum</span>
         </div>
-        <div class="bottom-nav-item" data-nav="lobby">
-            <span class="nav-icon">⚔️</span>
-            <span>1 vs 1</span>
+        <div class="bottom-nav-item" data-nav="modes">
+            <span class="nav-icon">🎮</span>
+            <span>Modos</span>
         </div>
     </nav>
 
-    <!-- ==================== MODAL DE RECOMPENSA (CARTA DESBLOQUEADA) ==================== -->
+    <!-- ==================== MODAL: RECOMPENSA DIARIA (3 REGALOS) ==================== -->
+    <div id="modal-daily-gift" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="casual-card w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl text-center">
+            <div class="word-bank-header py-3 text-lg flex items-center justify-between px-4">
+                <span>🎁 Recompensa Diaria</span>
+                <button id="btn-close-gift-modal" class="text-white/90 hover:text-white font-bold">✕</button>
+            </div>
+            <div class="p-5 space-y-5">
+                <div>
+                    <div class="text-sm font-extrabold text-slate-700 mb-2">Días jugados seguidos</div>
+                    <div class="w-full bg-slate-200 h-5 rounded-full overflow-hidden relative">
+                        <div id="gift-streak-bar" class="bg-gradient-to-r from-emerald-400 to-green-500 h-full" style="width: 15%"></div>
+                        <span id="gift-streak-text" class="absolute inset-0 flex items-center justify-center text-xs font-black text-slate-800">Día 1</span>
+                    </div>
+                </div>
+
+                <div id="gift-boxes-area" class="space-y-3">
+                    <div class="text-base font-extrabold text-slate-800">¡Elige un regalo!</div>
+                    <div class="flex justify-center items-center gap-5 py-2">
+                        <button class="gift-box-btn text-6xl" data-box="0">🎁</button>
+                        <button class="gift-box-btn text-6xl" data-box="1">🎀</button>
+                        <button class="gift-box-btn text-6xl" data-box="2">📦</button>
+                    </div>
+                </div>
+
+                <div id="gift-result-area" class="hidden space-y-3 py-2">
+                    <div class="text-5xl animate-bounce">🪙</div>
+                    <div id="gift-reward-msg" class="text-xl font-black text-emerald-600">+150 Monedas</div>
+                    <button id="btn-claim-gift-done" class="btn-arcade-green w-full py-3 rounded-full font-bold text-base">
+                        ¡Genial!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: AJUSTES, MÚSICA Y FONDOS ESCÉNICOS ==================== -->
+    <div id="modal-audio-settings" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="casual-card w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="word-bank-header py-3 flex items-center justify-between px-4 flex-shrink-0">
+                <span>⚙️ Ajustes, Música y Fondos</span>
+                <button id="btn-close-audio-modal" class="text-white font-bold">✕</button>
+            </div>
+            <div class="p-4 space-y-4 overflow-y-auto">
+                <!-- Selector de Fondos -->
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">
+                        🖼️ Cambiar Fondo del Juego:
+                    </label>
+                    <div class="grid grid-cols-3 gap-2" id="bg-theme-options">
+                        <button data-bg="montanas" class="bg-theme-btn rounded-xl overflow-hidden border-2 border-slate-200 p-1 text-center transition">
+                            <div class="h-10 rounded-lg bg-cover bg-center mb-1" style="background-image:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&q=60')"></div>
+                            <span class="text-[10px] font-bold text-slate-700 block">Montañas</span>
+                        </button>
+                        <button data-bg="hojas" class="bg-theme-btn rounded-xl overflow-hidden border-2 border-slate-200 p-1 text-center transition">
+                            <div class="h-10 rounded-lg bg-cover bg-center mb-1" style="background-image:url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=300&q=60')"></div>
+                            <span class="text-[10px] font-bold text-slate-700 block">Hojas Rocío</span>
+                        </button>
+                        <button data-bg="atardecer" class="bg-theme-btn rounded-xl overflow-hidden border-2 border-slate-200 p-1 text-center transition">
+                            <div class="h-10 rounded-lg bg-cover bg-center mb-1" style="background-image:url('https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=300&q=60')"></div>
+                            <span class="text-[10px] font-bold text-slate-700 block">Atardecer</span>
+                        </button>
+                        <button data-bg="playa" class="bg-theme-btn rounded-xl overflow-hidden border-2 border-slate-200 p-1 text-center transition">
+                            <div class="h-10 rounded-lg bg-cover bg-center mb-1" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&q=60')"></div>
+                            <span class="text-[10px] font-bold text-slate-700 block">Playa</span>
+                        </button>
+                        <button data-bg="cerezos" class="bg-theme-btn rounded-xl overflow-hidden border-2 border-slate-200 p-1 text-center transition">
+                            <div class="h-10 rounded-lg bg-cover bg-center mb-1" style="background-image:url('https://images.unsplash.com/photo-1522383225653-ed111181a951?w=300&q=60')"></div>
+                            <span class="text-[10px] font-bold text-slate-700 block">Cerezos</span>
+                        </button>
+                        <button data-bg="aurora" class="bg-theme-btn rounded-xl overflow-hidden border-2 border-slate-200 p-1 text-center transition">
+                            <div class="h-10 rounded-lg bg-cover bg-center mb-1" style="background-image:url('https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=300&q=60')"></div>
+                            <span class="text-[10px] font-bold text-slate-700 block">Aurora</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Género Musical -->
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">
+                        🎵 Música de Fondo (Sin Copyright):
+                    </label>
+                    <div class="grid grid-cols-2 gap-2" id="music-genre-options">
+                        <button data-genre="piano" class="music-genre-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 flex items-center space-x-2 transition">
+                            <span>🎹</span><span>Piano Suave</span>
+                        </button>
+                        <button data-genre="relax" class="music-genre-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 flex items-center space-x-2 transition">
+                            <span>🌿</span><span>Relax Zen</span>
+                        </button>
+                        <button data-genre="lofi" class="music-genre-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 flex items-center space-x-2 transition">
+                            <span>🎧</span><span>Lo-Fi Chill</span>
+                        </button>
+                        <button data-genre="aventura" class="music-genre-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 flex items-center space-x-2 transition">
+                            <span>🗺️</span><span>Aventura</span>
+                        </button>
+                        <button data-genre="off" class="music-genre-btn col-span-2 p-2 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-500 flex items-center justify-center space-x-2 transition">
+                            <span>🔇</span><span>Sin Música</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-100 p-3 rounded-2xl border border-slate-200">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg">🔊</span>
+                        <span class="text-xs font-extrabold text-slate-700">Efectos de Sonido</span>
+                    </div>
+                    <button id="btn-toggle-sfx" class="px-3.5 py-1.5 rounded-full text-xs font-black bg-emerald-500 text-white shadow transition">
+                        Activado
+                    </button>
+                </div>
+
+                <button id="btn-save-audio-modal" class="btn-arcade-green w-full py-2.5 rounded-full font-bold text-sm">
+                    Listo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL DE RECOMPENSA / CARTA DESBLOQUEADA ==================== -->
     <div id="modal-reward-card" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="casual-card w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl text-center">
             <div class="word-bank-header py-3 text-base flex items-center justify-between px-4">
                 <span id="reward-modal-title">🎉 ¡NIVEL SUPERADO!</span>
-                <button id="btn-close-reward-modal" class="text-white/80 hover:text-white font-bold">✕</button>
+                <button id="btn-close-reward-modal" class="text-white/90 hover:text-white font-bold">✕</button>
             </div>
 
             <div class="p-4 space-y-3">
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden shadow-inner">
                     <div class="relative w-full aspect-video overflow-hidden">
-                        <img id="reward-card-img" src="" alt="Animal" class="w-full h-full object-cover">
-                        <span id="reward-card-rarity" class="absolute top-2 right-2 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-white/90 shadow">
+                        <img id="reward-card-img" src="" alt="Carta" class="w-full h-full object-cover">
+                        <span id="reward-card-rarity" class="absolute top-2 right-2 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-white/95 shadow">
                             Raro
                         </span>
                     </div>
@@ -418,54 +673,6 @@
                     Guardar Perfil
                 </button>
             </form>
-        </div>
-    </div>
-
-    <!-- ==================== MODAL DE MÚSICA Y SONIDO ==================== -->
-    <div id="modal-audio-settings" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="casual-card w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
-            <div class="word-bank-header py-3 flex items-center justify-between px-4">
-                <span>🎵 Música y Sonido</span>
-                <button id="btn-close-audio-modal" class="text-white font-bold">✕</button>
-            </div>
-            <div class="p-5 space-y-4">
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">
-                        Género Musical (Sin Copyright):
-                    </label>
-                    <div class="grid grid-cols-2 gap-2" id="music-genre-options">
-                        <button data-genre="piano" class="music-genre-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 flex items-center space-x-2 transition">
-                            <span class="text-lg">🎹</span><span>Piano Suave</span>
-                        </button>
-                        <button data-genre="relax" class="music-genre-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 flex items-center space-x-2 transition">
-                            <span class="text-lg">🌿</span><span>Relax Zen</span>
-                        </button>
-                        <button data-genre="lofi" class="music-genre-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 flex items-center space-x-2 transition">
-                            <span class="text-lg">🎧</span><span>Lo-Fi Chill</span>
-                        </button>
-                        <button data-genre="aventura" class="music-genre-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 flex items-center space-x-2 transition">
-                            <span class="text-lg">🗺️</span><span>Aventura</span>
-                        </button>
-                        <button data-genre="off" class="music-genre-btn col-span-2 p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-500 flex items-center justify-center space-x-2 transition">
-                            <span>🔇</span><span>Sin Música de Fondo</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between bg-slate-100 p-3 rounded-2xl border border-slate-200">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg">🔊</span>
-                        <span class="text-xs font-extrabold text-slate-700">Efectos de Sonido</span>
-                    </div>
-                    <button id="btn-toggle-sfx" class="px-3.5 py-1.5 rounded-full text-xs font-black bg-emerald-500 text-white shadow transition">
-                        Activado
-                    </button>
-                </div>
-
-                <button id="btn-save-audio-modal" class="btn-arcade-green w-full py-2.5 rounded-full font-bold text-sm">
-                    Listo
-                </button>
-            </div>
         </div>
     </div>
 
