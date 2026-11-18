@@ -234,6 +234,9 @@
                     <span id="hud-rival-name" class="text-xs font-extrabold text-slate-800">Rival</span>
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                 </div>
+                <button id="btn-exit-multi-match" class="ml-1 px-2.5 py-1 rounded-full bg-red-100 hover:bg-red-200 text-red-600 text-[11px] font-black transition" title="Salir de la Sala">
+                    ✕ Salir
+                </button>
             </div>
 
             <!-- 1. TARJETA DE BANCO DE PALABRAS -->
@@ -400,20 +403,34 @@
 
         <!-- ==================== PANTALLA 9: LOBBY MULTIJUGADOR ==================== -->
         <section id="screen-lobby" class="app-screen hidden space-y-4 py-2">
-            <div class="casual-card p-5 space-y-4 text-center">
-                <h2 class="text-xl font-extrabold text-slate-800">⚔️ Duelo 1 vs 1 en Vivo</h2>
+            <div class="casual-card p-5 space-y-4 text-center relative">
+                <!-- Botón X siempre visible para salir de la sala -->
+                <button id="btn-lobby-x" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-600 font-black text-base flex items-center justify-center transition shadow-sm" title="Salir de la Sala">
+                    ✕
+                </button>
 
+                <h2 class="text-xl font-extrabold text-slate-800 pr-6">⚔️ Duelo 1 vs 1 en Vivo</h2>
+
+                <!-- Estado Inicial: Buscar Pública o Sala Privada -->
                 <div id="lobby-init" class="space-y-4">
-                    <p class="text-xs text-slate-500">Crea una sala privada o únete con el código de tu amigo para competir en el mismo tablero.</p>
-                    <button id="btn-host-room" class="btn-arcade-green w-full py-3.5 rounded-full font-bold text-base">
-                        ✨ Crear Nueva Sala
-                    </button>
+                    <!-- Partida Pública Sin Clave -->
+                    <div class="bg-emerald-50/90 border border-emerald-200 rounded-2xl p-3.5 space-y-2.5">
+                        <div class="text-xs font-extrabold text-emerald-800 uppercase tracking-wider">🌐 Emparejamiento Público</div>
+                        <p class="text-[11px] text-slate-600">Busca automáticamente a otros jugadores conectados ahora mismo sin necesidad de clave.</p>
+                        <button id="btn-find-public-match" class="btn-arcade-green w-full py-3.5 rounded-full font-bold text-base">
+                            🔍 Buscar Rival Online
+                        </button>
+                    </div>
 
                     <div class="relative flex py-1 items-center">
                         <div class="flex-grow border-t border-slate-200"></div>
-                        <span class="flex-shrink mx-3 text-slate-400 text-[10px] font-bold uppercase">o únete</span>
+                        <span class="flex-shrink mx-3 text-slate-400 text-[10px] font-bold uppercase">o con amigos (clave)</span>
                         <div class="flex-grow border-t border-slate-200"></div>
                     </div>
+
+                    <button id="btn-host-room" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold text-sm shadow transition">
+                        ✨ Crear Sala Privada
+                    </button>
 
                     <div class="flex space-x-2">
                         <input id="room-input-code" type="text" placeholder="CÓDIGO" maxlength="6" class="flex-1 bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-center font-mono font-bold tracking-widest text-slate-800 uppercase focus:outline-none focus:border-emerald-500">
@@ -423,6 +440,26 @@
                     </div>
                 </div>
 
+                <!-- Estado Buscando Partida Pública (Sin Clave) -->
+                <div id="lobby-searching" class="hidden space-y-4 py-2">
+                    <div class="text-5xl animate-pulse">🛰️</div>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-800">Buscando jugadores...</h3>
+                        <p id="search-status-msg" class="text-xs text-slate-500 font-semibold mt-1">
+                            Explorando salas públicas activas...
+                        </p>
+                    </div>
+
+                    <button id="btn-play-vs-bot" class="hidden w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white rounded-full font-bold text-sm shadow-lg transition">
+                        🤖 Jugar ahora vs Bot Inteligente
+                    </button>
+
+                    <button id="btn-cancel-search" class="w-full py-2.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs font-black transition">
+                        ✕ Cancelar y Salir
+                    </button>
+                </div>
+
+                <!-- Estado Esperando en Sala Privada -->
                 <div id="lobby-wait" class="hidden space-y-4">
                     <div class="text-4xl animate-bounce">📡</div>
                     <div class="bg-slate-100 border-2 border-dashed border-emerald-400 p-3 rounded-2xl">
@@ -437,6 +474,9 @@
                     </p>
                     <button id="btn-launch-match" class="hidden btn-arcade-green w-full py-3 rounded-full font-bold text-base">
                         🚀 ¡Comenzar Duelo!
+                    </button>
+                    <button id="btn-cancel-wait" class="w-full py-2.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs font-black transition">
+                        ✕ Cancelar y Salir de la Sala
                     </button>
                 </div>
             </div>
@@ -673,6 +713,28 @@
                     Guardar Perfil
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: RIVAL DESCONECTADO ==================== -->
+    <div id="modal-rival-left" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="casual-card w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl text-center">
+            <div class="bg-red-500 text-white font-game font-bold py-3 px-4 flex items-center justify-between">
+                <span>⚠️ Conexión Interrumpida</span>
+                <button id="btn-rival-left-x" class="text-white font-black">✕</button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="text-4xl">🔌</div>
+                <p class="text-sm font-bold text-slate-700">Tu rival abandonó la sala o perdió la conexión.</p>
+                <div class="space-y-2">
+                    <button id="btn-rival-left-exit" class="btn-arcade-green w-full py-3 rounded-full font-bold text-sm">
+                        Salir de la Sala
+                    </button>
+                    <button id="btn-rival-left-solo" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full font-bold text-xs transition">
+                        Seguir completando este tablero solo
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

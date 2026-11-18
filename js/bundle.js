@@ -711,48 +711,255 @@
     }
 
     // ==========================================
-    // 5. MULTIJUGADOR P2P
+    // 5. MULTIJUGADOR P2P (PÚBLICO SIN CLAVE + PRIVADO CON CLAVE)
     // ==========================================
+    const PUBLIC_SLOTS = ['pm-pub-v2-1', 'pm-pub-v2-2', 'pm-pub-v2-3', 'pm-pub-v2-4', 'pm-pub-v2-5'];
+
     class Multiplayer {
         constructor(handlers) {
-            this.h = handlers; this.peer = null; this.conn = null; this.isHost = false; this.code = null;
+            this.h = handlers;
+            this.peer = null;
+            this.conn = null;
+            this.isHost = false;
+            this.code = null;
+            this.status = 'IDLE'; // IDLE | SCANNING | WAITING | PLAYING
+            this.isPublic = false;
+            this.rivalProfile = null;
+            this.scanTimeout = null;
+            this.botOfferTimer = null;
         }
+
+        /**
+         * Busca jugadores online en salas públicas sin necesidad de clave
+         */
+        findPublicMatch(puzzleFactory) {
+            this.disconnect();
+            if (!window.Peer) {
+                this.h.onError('Sin conexión para multijugador.');
+                return;
+            }
+
+            this.status = 'SCANNING';
+            this.isPublic = true;
+            this.h.onSearchStart();
+
+            const scanPeerId = `pm-scan-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
+            const scanPeer = new window.Peer(scanPeerId, {
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+            });
+            this.peer = scanPeer;
+
+            const unavailableSlots = new Set();
+            const probeConns = [];
+            let matched = false;
+
+            scanPeer.on('error', (err) => {
+                if (err && err.type === 'peer-unavailable' && err.message) {
+                    const slot = PUBLIC_SLOTS.find(s => err.message.includes(s));
+                    if (slot) unavailableSlots.add(slot);
+                }
+            });
+
+            scanPeer.on('open', () => {
+                if (this.status !== 'SCANNING') return;
+
+                // Sondear los 5 slots públicos en paralelo
+                PUBLIC_SLOTS.forEach((slotId) => {
+                    try {
+                        const c = scanPeer.connect(slotId, { reliable: true });
+                        probeConns.push(c);
+
+                        c.on('data', (d) => {
+                            if (matched || this.status !== 'SCANNING') {
+                                try { c.close(); } catch (e) {}
+                                return;
+                            }
+                            if (d && d.type === 'SLOT_STATUS') {
+                                if (d.state === 'WAITING') {
+                                    matched = true;
+                                    clearTimeout(this.scanTimeout);
+                                    this.status = 'PLAYING';
+                                    this.isHost = false;
+                                    this.conn = c;
+
+                                    // Cerrar los demás sondeos
+                                    probeConns.forEach(other => {
+                                        if (other !== c) try { other.close(); } catch (e) {}
+                                    });
+
+                                    this.wire();
+                                    c.send({ type: 'CLAIM_PUBLIC', profile: Storage.getProfile() });
+                                } else {
+                                    try { c.close(); } catch (e) {}
+                                }
+                            }
+                        });
+                    } catch (e) {}
+                });
+
+                // Si tras 2.2s nadie estaba esperando, abrir un slot público como anfitrión
+                this.scanTimeout = setTimeout(() => {
+                    if (matched || this.status !== 'SCANNING') return;
+                    probeConns.forEach(c => { try { c.close(); } catch (e) {} });
+                    try { scanPeer.destroy(); } catch (e) {}
+
+                    const freeSlot = PUBLIC_SLOTS.find(s => unavailableSlots.has(s)) || PUBLIC_SLOTS[0];
+                    this.hostPublicSlot(freeSlot, puzzleFactory);
+                }, 2200);
+            });
+        }
+
+        hostPublicSlot(slotId, puzzleFactory) {
+            if (this.status !== 'SCANNING') return;
+            this.isHost = true;
+            this.status = 'WAITING';
+            this.isPublic = true;
+
+            const hostPeer = new window.Peer(slotId, {
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+            });
+            this.peer = hostPeer;
+
+            hostPeer.on('open', () => {
+                this.h.onSearchWaiting();
+                this.botOfferTimer = setTimeout(() => {
+                    if (this.status === 'WAITING') this.h.onBotOfferReady();
+                }, 6000);
+            });
+
+            hostPeer.on('connection', (c) => {
+                c.on('open', () => {
+                    if (this.status !== 'WAITING') {
+                        c.send({ type: 'SLOT_STATUS', state: 'BUSY' });
+                        setTimeout(() => { try { c.close(); } catch (e) {} }, 200);
+                        return;
+                    }
+                    c.send({ type: 'SLOT_STATUS', state: 'WAITING' });
+                });
+
+                c.on('data', (d) => {
+                    if (d && d.type === 'CLAIM_PUBLIC') {
+                        if (this.status !== 'WAITING') {
+                            try { c.send({ type: 'SLOT_STATUS', state: 'BUSY' }); c.close(); } catch (e) {}
+                            return;
+                        }
+                        this.status = 'PLAYING';
+                        clearTimeout(this.botOfferTimer);
+                        this.conn = c;
+                        this.rivalProfile = d.profile;
+                        this.wire();
+
+                        // Iniciar partida inmediatamente para ambos
+                        const puzzle = puzzleFactory();
+                        this.startMatch(puzzle);
+                    }
+                });
+            });
+
+            hostPeer.on('error', (err) => {
+                if (err.type === 'unavailable-id' && this.status === 'WAITING') {
+                    // Otro jugador tomó ese slot justo al mismo tiempo; probar siguiente
+                    const idx = PUBLIC_SLOTS.indexOf(slotId);
+                    const nextSlot = PUBLIC_SLOTS[(idx + 1) % PUBLIC_SLOTS.length];
+                    try { hostPeer.destroy(); } catch (e) {}
+                    this.status = 'SCANNING';
+                    this.hostPublicSlot(nextSlot, puzzleFactory);
+                }
+            });
+        }
+
         createRoom() {
+            this.disconnect();
             this.code = Math.random().toString(36).substring(2, 6).toUpperCase();
             this.isHost = true;
+            this.isPublic = false;
+            this.status = 'WAITING';
+
             if (window.Peer) {
                 this.peer = new window.Peer('sopa-match-' + this.code, { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
                 this.peer.on('open', () => this.h.onCreated(this.code));
-                this.peer.on('connection', (c) => { this.conn = c; this.wire(); });
-                this.peer.on('error', (err) => { if (err.type === 'unavailable-id') this.createRoom(); else this.h.onError('Error creando sala'); });
+                this.peer.on('connection', (c) => {
+                    if (this.conn && this.conn.open) {
+                        try { c.close(); } catch (e) {}
+                        return;
+                    }
+                    this.conn = c;
+                    this.wire();
+                });
+                this.peer.on('error', (err) => {
+                    if (err.type === 'unavailable-id') this.createRoom();
+                    else this.h.onError('Error creando sala');
+                });
             } else this.h.onError('Sin conexión para multijugador.');
         }
+
         joinRoom(code) {
-            this.code = code.trim().toUpperCase(); this.isHost = false;
+            this.disconnect();
+            this.code = code.trim().toUpperCase();
+            this.isHost = false;
+            this.isPublic = false;
+            this.status = 'WAITING';
+
             if (window.Peer) {
                 this.peer = new window.Peer('sopa-guest-' + Date.now(), { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
-                this.peer.on('open', () => { this.conn = this.peer.connect('sopa-match-' + this.code, { reliable: true }); this.wire(); });
-                this.peer.on('error', () => this.h.onError('No se encontró la sala.'));
+                this.peer.on('open', () => {
+                    this.conn = this.peer.connect('sopa-match-' + this.code, { reliable: true });
+                    this.wire();
+                });
+                this.peer.on('error', () => this.h.onError('No se encontró la sala o el código es incorrecto.'));
             }
         }
+
         wire() {
             if (!this.conn) return;
-            this.conn.on('open', () => { if (this.isHost) this.h.onJoined(); else this.send({ type: 'HELLO', profile: Storage.getProfile() }); });
+            this.conn.on('open', () => {
+                if (!this.isPublic) {
+                    if (this.isHost) this.h.onJoined();
+                    else this.send({ type: 'HELLO', profile: Storage.getProfile() });
+                }
+            });
             this.conn.on('data', (d) => {
-                if (d.type === 'HELLO') this.h.onJoined(d.profile);
-                if (d.type === 'START') this.h.onStart(d);
+                if (!d || !d.type) return;
+                if (d.type === 'HELLO') {
+                    this.rivalProfile = d.profile;
+                    this.h.onJoined(d.profile);
+                }
+                if (d.type === 'START') {
+                    this.status = 'PLAYING';
+                    this.rivalProfile = d.hostProfile;
+                    this.h.onStart(d);
+                }
                 if (d.type === 'WORD') this.h.onWord(d);
                 if (d.type === 'EMOJI') this.h.onEmoji(d.emoji);
             });
-            this.conn.on('close', () => this.h.onLeave());
+            this.conn.on('close', () => {
+                if (this.status !== 'IDLE') {
+                    this.h.onLeave();
+                }
+            });
         }
+
         send(msg) { if (this.conn && this.conn.open) this.conn.send(msg); }
-        startMatch(puzzle) { this.send({ type: 'START', puzzle, hostProfile: Storage.getProfile() }); this.h.onStart({ puzzle, hostProfile: Storage.getProfile() }); }
+        startMatch(puzzle) {
+            this.status = 'PLAYING';
+            this.send({ type: 'START', puzzle, hostProfile: Storage.getProfile() });
+            this.h.onStart({ puzzle, hostProfile: Storage.getProfile(), guestProfile: this.rivalProfile });
+        }
         sendWord(word, cells) { this.send({ type: 'WORD', word, cells }); }
         disconnect() {
-            if (this.conn) try { this.conn.close(); } catch (e) {}
-            if (this.peer) try { this.peer.destroy(); } catch (e) {}
-            this.conn = null; this.peer = null; this.code = null;
+            clearTimeout(this.scanTimeout);
+            clearTimeout(this.botOfferTimer);
+            this.status = 'IDLE';
+            this.rivalProfile = null;
+            if (this.conn) {
+                try { this.conn.off('close'); this.conn.close(); } catch (e) {}
+            }
+            if (this.peer) {
+                try { this.peer.destroy(); } catch (e) {}
+            }
+            this.conn = null;
+            this.peer = null;
+            this.code = null;
         }
     }
 
@@ -771,32 +978,58 @@
             this.seconds = 0;
             this.blitzScore = 0;
 
+            this.isBotMatch = false;
+            this.botTimer = null;
+            this.botName = '🤖 Bot';
+
             this.isDragging = false;
             this.startCell = null;
             this.selectedCells = [];
             this.colorIndex = 0;
 
             this.multiplayer = new Multiplayer({
+                onSearchStart: () => {
+                    document.getElementById('lobby-init').classList.add('hidden');
+                    document.getElementById('lobby-wait').classList.add('hidden');
+                    document.getElementById('lobby-searching').classList.remove('hidden');
+                    document.getElementById('btn-play-vs-bot').classList.add('hidden');
+                    document.getElementById('search-status-msg').textContent = 'Explorando salas públicas activas...';
+                },
+                onSearchWaiting: () => {
+                    document.getElementById('search-status-msg').textContent = 'En cola pública. Esperando otro jugador online...';
+                },
+                onBotOfferReady: () => {
+                    document.getElementById('search-status-msg').textContent = 'Pocos jugadores libres ahora. Puedes seguir esperando o enfrentar a un Bot:';
+                    document.getElementById('btn-play-vs-bot').classList.remove('hidden');
+                },
                 onCreated: (code) => {
                     document.getElementById('lobby-init').classList.add('hidden');
+                    document.getElementById('lobby-searching').classList.add('hidden');
                     document.getElementById('lobby-wait').classList.remove('hidden');
                     document.getElementById('code-display').textContent = code;
+                    document.getElementById('wait-status-msg').textContent = 'Esperando al rival...';
+                    document.getElementById('btn-launch-match').classList.add('hidden');
                 },
-                onJoined: () => {
-                    document.getElementById('wait-status-msg').textContent = '¡Rival conectado!';
+                onJoined: (prof) => {
+                    const name = prof && prof.name ? prof.name : 'Rival';
+                    document.getElementById('wait-status-msg').textContent = `¡${name} conectado! Listo para empezar.`;
                     document.getElementById('btn-launch-match').classList.remove('hidden');
                 },
                 onStart: (d) => this.startMultiGame(d),
                 onWord: (d) => this.onRivalWord(d),
                 onEmoji: () => {},
-                onLeave: () => { alert('El rival salió.'); this.stopTimer(); this.nav('menu'); },
-                onError: (m) => alert(m)
+                onLeave: () => this.handleRivalLeft(),
+                onError: (m) => {
+                    alert(m);
+                    this.resetLobbyPanels();
+                }
             });
 
             this.applyTheme(Storage.getTheme());
             this.bindUI();
             this.renderHubInfo();
             this.startDailyCountdownLoop();
+            this.checkURL();
             window.addEventListener('resize', () => {
                 if (this.puzzle && !document.getElementById('screen-game').classList.contains('hidden')) {
                     this.resizeBoard();
@@ -824,9 +1057,7 @@
             });
 
             document.getElementById('btn-top-back').onclick = () => {
-                this.stopTimer();
-                this.renderHubInfo();
-                this.nav('menu');
+                this.exitMultiplayerToMenu();
             };
 
             // Botón Gigante "Jugar Nivel X"
@@ -851,7 +1082,11 @@
             document.getElementById('btn-mode-classic').onclick = () => { this.renderClassicCategories(); this.nav('categories'); };
             document.getElementById('btn-mode-blitz').onclick = () => this.startBlitzMode();
             document.getElementById('btn-mode-mystery').onclick = () => this.startMysteryMode();
-            document.getElementById('btn-mode-multi').onclick = () => { this.mode = 'multi'; this.nav('lobby'); };
+            document.getElementById('btn-mode-multi').onclick = () => {
+                this.mode = 'multi';
+                this.resetLobbyPanels();
+                this.nav('lobby');
+            };
             document.getElementById('btn-mode-creator').onclick = () => this.nav('creator');
 
             // Desafío Diario
@@ -931,7 +1166,33 @@
                 box.onclick = () => this.claimDailyGiftBox();
             });
 
-            // Multijugador
+            // Multijugador (Partida Pública sin Clave + Salas Privadas + Salidas X)
+            const makeRandomMultiPuzzle = () => {
+                const cats = Object.values(CLASSIC_CATEGORIES);
+                const randomCat = cats[Math.floor(Math.random() * cats.length)];
+                return Generator.createRandom(randomCat.words, 'medio');
+            };
+
+            document.getElementById('btn-find-public-match').onclick = () => {
+                this.multiplayer.findPublicMatch(makeRandomMultiPuzzle);
+            };
+            document.getElementById('btn-play-vs-bot').onclick = () => this.startBotMatch();
+            document.getElementById('btn-cancel-search').onclick = () => this.exitMultiplayerToMenu();
+            document.getElementById('btn-cancel-wait').onclick = () => this.exitMultiplayerToMenu();
+            document.getElementById('btn-lobby-x').onclick = () => this.exitMultiplayerToMenu();
+            document.getElementById('btn-exit-multi-match').onclick = () => this.exitMultiplayerToMenu();
+
+            document.getElementById('btn-rival-left-exit').onclick = () => this.exitMultiplayerToMenu();
+            document.getElementById('btn-rival-left-x').onclick = () => this.exitMultiplayerToMenu();
+            document.getElementById('btn-rival-left-solo').onclick = () => {
+                document.getElementById('modal-rival-left').classList.add('hidden');
+                this.multiplayer.disconnect();
+                this.mode = 'classic';
+                this.classicCategory = Object.values(CLASSIC_CATEGORIES)[0];
+                document.getElementById('game-hud-multi').classList.add('hidden');
+                document.getElementById('top-hud-title').textContent = 'Modo Solitario';
+            };
+
             document.getElementById('btn-host-room').onclick = () => this.multiplayer.createRoom();
             document.getElementById('btn-join-match').onclick = () => {
                 const c = document.getElementById('room-input-code').value;
@@ -942,9 +1203,7 @@
                 navigator.clipboard.writeText(url).then(() => alert('¡Enlace de invitación copiado!'));
             };
             document.getElementById('btn-launch-match').onclick = () => {
-                const cats = Object.values(CLASSIC_CATEGORIES);
-                const randomCat = cats[Math.floor(Math.random() * cats.length)];
-                this.multiplayer.startMatch(Generator.createRandom(randomCat.words, 'medio'));
+                this.multiplayer.startMatch(makeRandomMultiPuzzle());
             };
 
             // Perfil Modal
@@ -1006,7 +1265,26 @@
             document.getElementById('modal-audio-settings').classList.remove('hidden');
         }
 
+        checkURL() {
+            const params = new URLSearchParams(window.location.search);
+            const sala = params.get('sala');
+            if (sala) {
+                this.mode = 'multi';
+                this.resetLobbyPanels();
+                this.nav('lobby');
+                document.getElementById('room-input-code').value = sala.toUpperCase();
+                setTimeout(() => this.multiplayer.joinRoom(sala), 500);
+            }
+        }
+
         nav(view) {
+            if (view !== 'lobby' && view !== 'game') {
+                this.stopBot();
+                if (this.multiplayer.status !== 'IDLE') {
+                    this.multiplayer.disconnect();
+                    this.resetLobbyPanels();
+                }
+            }
             document.querySelectorAll('.app-screen').forEach(s => s.classList.add('hidden'));
             const target = document.getElementById('screen-' + view);
             if (target) target.classList.remove('hidden');
@@ -1671,13 +1949,17 @@
                     this.renderHubInfo();
                     setTimeout(() => { alert(`🎲 ¡Sopa completada en ${this.fmtTime(this.seconds)}!\n+${coins} 🪙`); this.startClassicGame(this.classicCategory); }, 350);
                 } else if (this.mode === 'multi') {
+                    this.stopBot();
                     sound.playWordSuccess();
                     let my = 0, riv = 0;
                     this.found.forEach(v => { if (v.who === 'me') my++; else riv++; });
                     const won = my > riv;
                     if (won) Storage.addScoreAndCoins(500, 250);
                     this.renderHubInfo();
-                    setTimeout(() => { alert(won ? `👑 ¡Victoria ${my}-${riv}! +250 🪙` : `Resultado: ${my}-${riv}`); this.nav('menu'); }, 350);
+                    setTimeout(() => {
+                        alert(won ? `👑 ¡Victoria ${my}-${riv}! +250 🪙` : (my === riv ? `🤝 ¡Empate ${my}-${riv}!` : `🥈 Ganó ${this.isBotMatch ? this.botName : 'tu rival'} (${riv}-${my})`));
+                        this.exitMultiplayerToMenu();
+                    }, 350);
                 }
             }
         }
@@ -1700,7 +1982,94 @@
             document.getElementById('modal-reward-card').classList.remove('hidden');
         }
 
+        resetLobbyPanels() {
+            document.getElementById('lobby-init').classList.remove('hidden');
+            document.getElementById('lobby-searching').classList.add('hidden');
+            document.getElementById('lobby-wait').classList.add('hidden');
+            document.getElementById('btn-play-vs-bot').classList.add('hidden');
+            document.getElementById('btn-launch-match').classList.add('hidden');
+        }
+
+        exitMultiplayerToMenu() {
+            this.stopBot();
+            this.stopTimer();
+            this.isBotMatch = false;
+            this.multiplayer.disconnect();
+            this.resetLobbyPanels();
+            document.getElementById('modal-rival-left').classList.add('hidden');
+            this.renderHubInfo();
+            this.nav('menu');
+        }
+
+        handleRivalLeft() {
+            if (this.isBotMatch) return;
+            const inGame = !document.getElementById('screen-game').classList.contains('hidden');
+            const inLobby = !document.getElementById('screen-lobby').classList.contains('hidden');
+
+            if (inGame && this.mode === 'multi') {
+                this.stopTimer();
+                document.getElementById('modal-rival-left').classList.remove('hidden');
+            } else if (inLobby) {
+                document.getElementById('wait-status-msg').textContent = 'El rival se desconectó. Esperando de nuevo...';
+                document.getElementById('btn-launch-match').classList.add('hidden');
+            }
+        }
+
+        startBotMatch() {
+            this.multiplayer.disconnect();
+            this.stopBot();
+            this.isBotMatch = true;
+            this.mode = 'multi';
+
+            const bots = ['🤖 Sofía_IA', '🤖 Relámpago_IA', '🤖 Maestro_CPU'];
+            this.botName = bots[Math.floor(Math.random() * bots.length)];
+
+            const cats = Object.values(CLASSIC_CATEGORIES);
+            const randomCat = cats[Math.floor(Math.random() * cats.length)];
+            this.puzzle = Generator.createRandom(randomCat.words, 'medio');
+
+            document.getElementById('game-hud-multi').classList.remove('hidden');
+            document.getElementById('top-hud-title').textContent = 'Duelo vs Bot';
+            document.getElementById('game-theme-banner').textContent = `${randomCat.icon} ${randomCat.name}`;
+
+            const p = Storage.getProfile();
+            document.getElementById('hud-player-name').textContent = p.name;
+            document.getElementById('hud-rival-name').textContent = this.botName;
+            this.updateMultiScore();
+            this.resetGameRound();
+            this.nav('game');
+
+            const scheduleNextBotWord = () => {
+                if (!this.isBotMatch || this.mode !== 'multi') return;
+                const delay = 5500 + Math.floor(Math.random() * 4500);
+                this.botTimer = setTimeout(() => {
+                    if (!this.isBotMatch || this.mode !== 'multi') return;
+                    const missing = this.puzzle.placedWords.filter(w => !this.found.has(w.word));
+                    if (missing.length > 0) {
+                        const pick = missing[Math.floor(Math.random() * missing.length)];
+                        sound.playSelect();
+                        this.claim(pick.word, pick.cells, 'rival');
+                        this.checkGameOver();
+                        if (this.found.size < this.puzzle.wordsToFind.length) {
+                            scheduleNextBotWord();
+                        }
+                    }
+                }, delay);
+            };
+            scheduleNextBotWord();
+        }
+
+        stopBot() {
+            this.isBotMatch = false;
+            if (this.botTimer) {
+                clearTimeout(this.botTimer);
+                this.botTimer = null;
+            }
+        }
+
         startMultiGame(data) {
+            this.stopBot();
+            this.isBotMatch = false;
             this.mode = 'multi';
             this.puzzle = data.puzzle;
             document.getElementById('game-hud-multi').classList.remove('hidden');
@@ -1708,8 +2077,9 @@
             document.getElementById('game-theme-banner').textContent = '⚔️ EN VIVO';
 
             const p = Storage.getProfile();
+            const rivalProf = this.multiplayer.isHost ? data.guestProfile : data.hostProfile;
             document.getElementById('hud-player-name').textContent = p.name;
-            document.getElementById('hud-rival-name').textContent = this.multiplayer.isHost ? 'Rival' : 'Anfitrión';
+            document.getElementById('hud-rival-name').textContent = (rivalProf && rivalProf.name) ? rivalProf.name : 'Rival';
             this.updateMultiScore();
             this.resetGameRound();
             this.nav('game');
