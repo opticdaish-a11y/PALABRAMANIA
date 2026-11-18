@@ -193,26 +193,171 @@
     }
 
     // ==========================================
-    // 3. SISTEMA DE AUDIO
+    // 3. SISTEMA DE AUDIO Y MÚSICA GENERATIVA (100% SIN COPYRIGHT)
     // ==========================================
     class SoundEngine {
         constructor() {
             this.ctx = null;
             this.enabled = localStorage.getItem('sopa_sound') !== 'false';
+            this.musicGenre = localStorage.getItem('sopa_music_genre') || 'piano';
+            this.musicLoop = null;
+            this.musicBus = null;
+            this.stepIndex = 0;
+            this.isPlayingMusic = false;
         }
 
         init() {
             if (!this.ctx) {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (AudioCtx) this.ctx = new AudioCtx();
+                if (AudioCtx) {
+                    this.ctx = new AudioCtx();
+                    this.setupMusicBus();
+                }
             }
-            if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
         }
 
-        toggle() {
+        setupMusicBus() {
+            if (!this.ctx || this.musicBus) return;
+            // Filtro cálido paso-bajos + eco suave tipo estudio
+            const masterGain = this.ctx.createGain();
+            masterGain.gain.value = 0.22;
+
+            const lowpass = this.ctx.createBiquadFilter();
+            lowpass.type = 'lowpass';
+            lowpass.frequency.value = 1600;
+
+            const delay = this.ctx.createDelay();
+            delay.delayTime.value = 0.34;
+            const feedback = this.ctx.createGain();
+            feedback.gain.value = 0.28;
+
+            lowpass.connect(masterGain);
+            lowpass.connect(delay);
+            delay.connect(feedback);
+            feedback.connect(delay);
+            delay.connect(masterGain);
+            masterGain.connect(this.ctx.destination);
+
+            this.musicBus = lowpass;
+        }
+
+        toggleSfx() {
             this.enabled = !this.enabled;
             localStorage.setItem('sopa_sound', this.enabled);
             return this.enabled;
+        }
+
+        setMusicGenre(genre) {
+            this.musicGenre = genre;
+            localStorage.setItem('sopa_music_genre', genre);
+            this.stopMusic();
+            if (genre !== 'off') {
+                this.startMusic();
+            }
+        }
+
+        startMusic() {
+            if (this.musicGenre === 'off') return;
+            this.init();
+            if (!this.ctx || this.isPlayingMusic) return;
+
+            this.isPlayingMusic = true;
+            this.stepIndex = 0;
+
+            const intervals = { piano: 750, relax: 2200, lofi: 620, aventura: 480 };
+            const ms = intervals[this.musicGenre] || 800;
+
+            this.playMusicStep();
+            this.musicLoop = setInterval(() => this.playMusicStep(), ms);
+        }
+
+        stopMusic() {
+            this.isPlayingMusic = false;
+            if (this.musicLoop) {
+                clearInterval(this.musicLoop);
+                this.musicLoop = null;
+            }
+        }
+
+        playTone(freq, duration, type = 'sine', vol = 0.2, attack = 0.04) {
+            if (!this.ctx || !this.musicBus) return;
+            try {
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, now);
+
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.linearRampToValueAtTime(vol, now + attack);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+                osc.connect(gain);
+                gain.connect(this.musicBus);
+                osc.start(now);
+                osc.stop(now + duration + 0.05);
+            } catch (e) {}
+        }
+
+        playMusicStep() {
+            if (!this.ctx || this.ctx.state !== 'running' || this.musicGenre === 'off') return;
+            const s = this.stepIndex++;
+
+            if (this.musicGenre === 'piano') {
+                // Progresión Cmaj7 -> Am7 -> Fmaj7 -> G6 en arpegio suave
+                const chords = [
+                    [261.63, 329.63, 392.00, 493.88], // Cmaj7
+                    [220.00, 261.63, 329.63, 392.00], // Am7
+                    [174.61, 220.00, 261.63, 329.63], // Fmaj7
+                    [196.00, 246.94, 293.66, 329.63]  // G6
+                ];
+                const chord = chords[Math.floor(s / 4) % chords.length];
+                const note = chord[s % 4];
+                this.playTone(note, 1.8, 'triangle', 0.22, 0.03);
+                if (s % 4 === 0) {
+                    this.playTone(chord[0] / 2, 2.6, 'sine', 0.16, 0.08);
+                }
+            } else if (this.musicGenre === 'relax') {
+                // Pads ambientales lentos en Re Mayor Pentatónica
+                const pads = [
+                    [146.83, 220.00, 293.66, 369.99], // D
+                    [123.47, 185.00, 246.94, 293.66], // Bm
+                    [196.00, 246.94, 293.66, 369.99]  // Gmaj7
+                ];
+                const pad = pads[s % pads.length];
+                pad.forEach(f => this.playTone(f, 3.8, 'sine', 0.09, 0.8));
+                // Nota cristalina esporádica
+                const bells = [587.33, 739.99, 880.00, 1174.66];
+                this.playTone(bells[s % bells.length], 2.2, 'sine', 0.06, 0.1);
+            } else if (this.musicGenre === 'lofi') {
+                // Acordes cálidos Rhodes + bajo suave
+                const lofiChords = [
+                    [174.61, 261.63, 329.63, 440.00], // Fmaj7
+                    [164.81, 246.94, 293.66, 392.00], // Em7
+                    [146.83, 220.00, 261.63, 349.23], // Dm7
+                    [130.81, 196.00, 246.94, 329.63]  // Cmaj7
+                ];
+                const c = lofiChords[Math.floor(s / 4) % lofiChords.length];
+                if (s % 4 === 0) {
+                    c.forEach(f => this.playTone(f, 2.1, 'sine', 0.10, 0.05));
+                    this.playTone(c[0] / 2, 1.8, 'triangle', 0.18, 0.04);
+                } else if (s % 2 === 1) {
+                    const melody = [523.25, 587.33, 659.25, 440.00];
+                    this.playTone(melody[s % melody.length], 0.7, 'sine', 0.10, 0.02);
+                }
+            } else if (this.musicGenre === 'aventura') {
+                // Melodía alegre estilo marimba / kalimba en Sol Mayor Pentatónica
+                const scale = [392.00, 440.00, 493.88, 587.33, 659.25, 783.99];
+                const pattern = [0, 2, 3, 5, 4, 3, 2, 1];
+                const note = scale[pattern[s % pattern.length]];
+                this.playTone(note, 0.45, 'triangle', 0.22, 0.01);
+                if (s % 4 === 0) {
+                    this.playTone(196.00, 0.9, 'sine', 0.18, 0.02);
+                }
+            }
         }
 
         playSelect() {
@@ -722,11 +867,60 @@
                 };
             });
 
-            // Sonido
-            document.getElementById('btn-sound-toggle').onclick = () => {
-                const on = sound.toggle();
-                document.getElementById('sound-icon').textContent = on ? '🔊' : '🔇';
+            // Música y Sonido (Modal)
+            const updateAudioUI = () => {
+                document.querySelectorAll('.music-genre-btn').forEach(btn => {
+                    if (btn.dataset.genre === sound.musicGenre) {
+                        btn.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+                        btn.classList.remove('border-slate-200');
+                    } else {
+                        btn.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+                        btn.classList.add('border-slate-200');
+                    }
+                });
+                const sfxBtn = document.getElementById('btn-toggle-sfx');
+                if (sfxBtn) {
+                    sfxBtn.textContent = sound.enabled ? 'Activado' : 'Desactivado';
+                    sfxBtn.className = sound.enabled
+                        ? 'px-3.5 py-1.5 rounded-full text-xs font-black bg-emerald-500 text-white shadow transition'
+                        : 'px-3.5 py-1.5 rounded-full text-xs font-black bg-slate-300 text-slate-600 transition';
+                }
+                document.getElementById('sound-icon').textContent = (sound.musicGenre === 'off' && !sound.enabled) ? '🔇' : '🎵';
             };
+
+            document.getElementById('btn-sound-toggle').onclick = () => {
+                updateAudioUI();
+                document.getElementById('modal-audio-settings').classList.remove('hidden');
+            };
+
+            document.getElementById('btn-close-audio-modal').onclick = () => {
+                document.getElementById('modal-audio-settings').classList.add('hidden');
+            };
+            document.getElementById('btn-save-audio-modal').onclick = () => {
+                document.getElementById('modal-audio-settings').classList.add('hidden');
+            };
+
+            document.querySelectorAll('.music-genre-btn').forEach(btn => {
+                btn.onclick = () => {
+                    sound.setMusicGenre(btn.dataset.genre);
+                    updateAudioUI();
+                };
+            });
+
+            document.getElementById('btn-toggle-sfx').onclick = () => {
+                sound.toggleSfx();
+                updateAudioUI();
+            };
+
+            // Iniciar música suavemente al primer toque (requisito de navegadores móviles)
+            const unlockAudioOnce = () => {
+                if (sound.musicGenre !== 'off' && !sound.isPlayingMusic) {
+                    sound.startMusic();
+                }
+                window.removeEventListener('pointerdown', unlockAudioOnce);
+            };
+            window.addEventListener('pointerdown', unlockAudioOnce);
+            updateAudioUI();
 
             // Multijugador Lobby
             document.getElementById('btn-host-room').onclick = () => this.multiplayer.createRoom();
