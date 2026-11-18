@@ -1,6 +1,6 @@
-// sw.js - Service Worker para soporte Offline y PWA instalable en Android
+// sw.js - Service Worker (Network-First para recibir actualizaciones al instante y funcionar offline)
 
-const CACHE_NAME = 'palabramania-v1';
+const CACHE_NAME = 'palabramania-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -12,9 +12,9 @@ const ASSETS_TO_CACHE = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(ASSETS_TO_CACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -33,20 +33,23 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Solo interceptar peticiones GET dentro del mismo origen
   if (event.request.method !== 'GET') return;
 
+  // Estrategia Network-First: busca siempre la versión más reciente en internet;
+  // si no hay conexión, usa la copia guardada en caché.
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && event.request.url.startsWith(self.location.origin)) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
         return networkResponse;
-      }).catch(() => {
-        // Modo offline fallback si no hay red
-        return caches.match('./index.html');
-      });
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cached) => cached || caches.match('./index.html'));
+      })
   );
 });
