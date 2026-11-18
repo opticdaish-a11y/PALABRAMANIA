@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PalabraMania • Sopa de Letras y Aventura</title>
+    <title>PalabraMania • Sopa de Letras Aventura</title>
     <!-- Metadatos para Android y PWA -->
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#24b314">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,413 +18,371 @@
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Estilos de Estudio de Videojuego -->
+    <!-- Estilos Casual Móvil -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+<body>
 
-    <!-- ==================== BARRA SUPERIOR (HEADER) ==================== -->
-    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-40 px-4 py-2.5">
-        <div class="max-w-5xl mx-auto flex items-center justify-between">
-            <!-- Logo con botón para volver al menú -->
-            <div class="flex items-center space-x-2.5 cursor-pointer btn-home">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/20">
-                    🧩
-                </div>
-                <div>
-                    <span class="font-game font-bold text-lg sm:text-xl tracking-wide bg-gradient-to-r from-indigo-300 via-white to-cyan-300 bg-clip-text text-transparent">
-                        PalabraMania
-                    </span>
-                    <span class="hidden sm:inline-block ml-2 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        Online
-                    </span>
-                </div>
+    <!-- ==================== BARRA SUPERIOR COMPACTA (TOP HUD) ==================== -->
+    <header class="w-full max-w-[480px] mx-auto px-3 pt-2.5 pb-1 flex items-center justify-between z-30 flex-shrink-0">
+        <!-- Izquierda: Botón Volver y Sonido -->
+        <div class="flex items-center space-x-2">
+            <button id="btn-top-back" class="btn-circle-green hidden" title="Volver">
+                <span class="text-xl font-black leading-none">←</span>
+            </button>
+            <button id="btn-sound-toggle" class="btn-circle-green" title="Sonido">
+                <span id="sound-icon" class="text-lg">🔊</span>
+            </button>
+        </div>
+
+        <!-- Centro: Título de Nivel (Visible en Juego) -->
+        <div id="top-hud-level-info" class="hidden text-center">
+            <div id="top-hud-title" class="text-white font-game font-bold text-lg leading-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]">
+                Nivel 1
             </div>
-
-            <!-- Controles rápidos: Puntos, Sonido y Perfil -->
-            <div class="flex items-center space-x-2.5">
-                <!-- Contador de Puntos Acumulados -->
-                <div class="flex items-center space-x-1.5 bg-slate-800/80 border border-amber-500/30 px-3 py-1 rounded-xl text-xs font-bold text-amber-300 shadow">
-                    <span>⭐</span>
-                    <span id="header-score" class="font-mono">0 pts</span>
-                </div>
-
-                <!-- Botón de sonido -->
-                <button id="btn-sound-toggle" class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60 flex items-center justify-center text-base transition shadow" title="Silenciar / Activar Sonido">
-                    <span id="sound-icon">🔊</span>
-                </button>
-
-                <!-- Perfil de usuario -->
-                <button id="btn-profile-card" class="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-750 px-3 py-1 rounded-xl border border-slate-700/60 text-xs font-bold transition shadow">
-                    <span id="header-avatar" class="text-base">🦊</span>
-                    <div class="text-left hidden xs:block">
-                        <div id="header-name" class="text-white text-xs leading-none">Cazapalabras</div>
-                        <div id="header-rank" class="text-[9px] text-indigo-400 font-semibold leading-tight">Novato</div>
-                    </div>
-                </button>
+            <div id="top-hud-sub" class="text-[11px] font-bold text-white/95 bg-black/30 px-2.5 py-0.5 rounded-full backdrop-blur-sm inline-block">
+                ⏱️ <span id="hud-time-display">00:00</span>
             </div>
+        </div>
+
+        <!-- Derecha: Píldora de Puntos + Botón Perfil -->
+        <div class="flex items-center space-x-2">
+            <div class="coins-pill">
+                <span id="header-score" class="font-mono">0</span>
+                <span class="text-amber-400 text-base leading-none">🪙</span>
+            </div>
+            <button id="btn-profile-card" class="btn-circle-green" title="Perfil">
+                <span id="header-avatar" class="text-xl">🦊</span>
+            </button>
         </div>
     </header>
 
     <!-- ==================== CONTENEDOR PRINCIPAL ==================== -->
-    <main class="max-w-4xl mx-auto w-full p-4 flex-1 flex flex-col justify-center">
+    <main class="app-main">
 
-        <!-- ==================== PANTALLA 1: DASHBOARD MENÚ ==================== -->
-        <section id="screen-menu" class="app-screen space-y-5 text-center py-4">
-            <div class="space-y-2">
-                <span class="inline-block px-3.5 py-1 bg-indigo-500/10 text-indigo-400 text-xs font-bold rounded-full border border-indigo-500/20">
-                    🎮 Modos de Juego para Todos los Jugadores
-                </span>
-                <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight">
-                    Sopa de Palabras <span class="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">Online</span>
-                </h1>
-                <p class="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto">
-                    Elige cómo quieres jugar hoy: avanza en la campaña de rescate o disfruta de infinitas partidas clásicas con palabras 100% al azar.
-                </p>
-            </div>
-
-            <!-- Botones Principales de Juego -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-xl mx-auto pt-2">
+        <!-- ==================== PANTALLA 1: HOGAR / HUB PRINCIPAL ==================== -->
+        <section id="screen-menu" class="app-screen flex flex-col justify-between h-full py-2">
+            <!-- Espacio superior escénico para que se aprecie el paisaje de montañas -->
+            <div class="flex-1 flex flex-col justify-center items-center pt-8">
                 
-                <!-- 1. MODO AVENTURA (Campaña & Rescate) -->
-                <button id="btn-adventure-mode" class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 hover:from-indigo-500 hover:to-purple-700 p-5 rounded-3xl border border-indigo-400/30 text-left flex flex-col justify-between group shadow-xl transition transform hover:-translate-y-1">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-4xl group-hover:scale-110 transition duration-300">🗺️</span>
-                        <span class="text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-400/40">
-                            Campaña
-                        </span>
+                <!-- Tarjeta Central de Jugador (Inspirada en la captura de referencia) -->
+                <div class="casual-card w-full p-4 pt-2 text-center relative mt-8">
+                    <!-- Avatar flotante con marco de madera/oro -->
+                    <div class="avatar-frame-wood cursor-pointer" onclick="document.getElementById('btn-profile-card').click()">
+                        <span id="hub-avatar">🦊</span>
+                        <span class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center border-2 border-white shadow">✏️</span>
                     </div>
-                    <div>
-                        <h2 class="text-xl font-black text-white mb-1">Modo Aventura</h2>
-                        <p class="text-xs text-indigo-100/80 leading-relaxed">Supera niveles, desbloquea cartas fotográficas en HD y rescata animales exóticos.</p>
-                    </div>
-                </button>
 
-                <!-- 2. MODO CLÁSICO (Partidas Rápidas con Palabras al Azar) -->
-                <button id="btn-classic-mode" class="bg-gradient-to-br from-cyan-600 via-teal-700 to-emerald-800 hover:from-cyan-500 hover:to-teal-700 p-5 rounded-3xl border border-cyan-400/30 text-left flex flex-col justify-between group shadow-xl transition transform hover:-translate-y-1">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-4xl group-hover:scale-110 transition duration-300">🎲</span>
-                        <span class="text-[10px] font-black uppercase tracking-wider bg-cyan-400/20 text-cyan-200 px-2.5 py-0.5 rounded-full border border-cyan-400/40">
-                            Al Azar
-                        </span>
+                    <h2 class="text-lg font-extrabold text-slate-800">
+                        ¡Hola, <span id="hub-player-name" class="text-emerald-600">CAZAPALABRAS</span>!
+                    </h2>
+                    <div id="hub-rank-badge" class="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-2">
+                        Rango: Novato
                     </div>
-                    <div>
-                        <h2 class="text-xl font-black text-white mb-1">Modo Clásico</h2>
-                        <p class="text-xs text-cyan-100/80 leading-relaxed">Elige tu categoría favorita: cada partida genera palabras y posiciones 100% aleatorias.</p>
-                    </div>
-                </button>
 
-                <!-- 3. DUELO 1 VS 1 MULTIJUGADOR -->
-                <button id="btn-multi-mode" class="bg-slate-800/90 hover:bg-slate-750 p-4.5 rounded-2xl border border-slate-700/80 text-left flex items-center space-x-3.5 transition group">
-                    <span class="text-3xl group-hover:scale-110 transition">⚔️</span>
-                    <div>
-                        <h3 class="font-bold text-sm text-slate-100">Duelo 1 vs 1 en Vivo</h3>
-                        <p class="text-[11px] text-slate-400">Reta a un amigo con código de sala en tiempo real.</p>
+                    <!-- Barra de Progreso del Mundo -->
+                    <div class="bg-blue-50/90 rounded-2xl p-3 border border-blue-100">
+                        <div class="text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1.5">
+                            EXPEDICIÓN SALVAJE
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="flex-1 bg-slate-200 h-5 rounded-full overflow-hidden relative border border-slate-300">
+                                <div id="hub-world-bar" class="bg-gradient-to-r from-emerald-400 to-green-500 h-full transition-all duration-500" style="width: 12%"></div>
+                                <span id="hub-world-progress-text" class="absolute inset-0 flex items-center justify-center text-[11px] font-black text-slate-800">
+                                    1 / 8
+                                </span>
+                            </div>
+                            <span class="text-2xl leading-none">🎁</span>
+                        </div>
                     </div>
-                </button>
+                </div>
 
-                <!-- 4. ÁLBUM DE CROMOS -->
-                <button id="btn-album-mode" class="bg-slate-800/90 hover:bg-slate-750 p-4.5 rounded-2xl border border-slate-700/80 text-left flex items-center space-x-3.5 transition group">
-                    <span class="text-3xl group-hover:scale-110 transition">🖼️</span>
-                    <div>
-                        <h3 class="font-bold text-sm text-slate-100">Álbum de Colección</h3>
-                        <p class="text-[11px] text-slate-400">Tus cartas desbloqueadas y datos curiosos.</p>
+                <!-- Tarjeta de Racha Diaria -->
+                <div class="casual-card w-full p-3 mt-3 flex items-center justify-between px-5">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">🔥</span>
+                        <div class="text-left">
+                            <div class="text-sm font-extrabold text-slate-800">Racha de Aventura</div>
+                            <div id="hub-cards-count" class="text-[11px] font-bold text-slate-500">0/8 Cartas Rescatadas</div>
+                        </div>
                     </div>
-                </button>
+                    <span class="bg-amber-100 text-amber-700 font-black text-xs px-3 py-1 rounded-full border border-amber-200" id="hub-streak-badge">
+                        Nivel 1
+                    </span>
+                </div>
+            </div>
 
-                <!-- 5. RANKING GLOBAL -->
-                <button id="btn-ranking-mode" class="bg-slate-800/90 hover:bg-slate-750 p-4.5 rounded-2xl border border-slate-700/80 text-left flex items-center space-x-3.5 transition group">
-                    <span class="text-3xl group-hover:scale-110 transition">🏆</span>
-                    <div>
-                        <h3 class="font-bold text-sm text-slate-100">Ranking Global</h3>
-                        <p class="text-[11px] text-slate-400">Compara tus puntos con los mejores jugadores.</p>
-                    </div>
-                </button>
+            <!-- Botones Flotantes Laterales + Botón Principal Gigante -->
+            <div class="w-full space-y-3 pb-2 pt-2">
+                <!-- Accesos rápidos en círculos -->
+                <div class="flex justify-between items-center px-2">
+                    <button id="btn-quick-levels" class="flex flex-col items-center group">
+                        <div class="btn-circle-green lg bg-gradient-to-b from-amber-400 to-orange-500 border-amber-200" style="background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%); box-shadow: 0 4px 0 #92400e;">
+                            <span class="text-2xl">🗺️</span>
+                        </div>
+                        <span class="text-[11px] font-extrabold text-white drop-shadow mt-1">Niveles</span>
+                    </button>
 
-                <!-- 6. CREADOR PERSONALIZADO -->
-                <button id="btn-custom-mode" class="bg-slate-800/90 hover:bg-slate-750 p-4.5 rounded-2xl border border-slate-700/80 text-left flex items-center space-x-3.5 transition group">
-                    <span class="text-3xl group-hover:scale-110 transition">✏️</span>
-                    <div>
-                        <h3 class="font-bold text-sm text-slate-100">Crear mi Sopa</h3>
-                        <p class="text-[11px] text-slate-400">Juega con tus propias palabras personalizadas.</p>
-                    </div>
+                    <button id="btn-quick-custom" class="flex flex-col items-center group">
+                        <div class="btn-circle-green lg" style="background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); box-shadow: 0 4px 0 #075985;">
+                            <span class="text-2xl">✏️</span>
+                        </div>
+                        <span class="text-[11px] font-extrabold text-white drop-shadow mt-1">Crear Sopa</span>
+                    </button>
+                </div>
+
+                <!-- BOTÓN VERDE PRINCIPAL: JUGAR NIVEL ACTUAL -->
+                <button id="btn-play-current-level" class="btn-arcade-green w-full py-3.5 rounded-full font-game text-2xl font-bold tracking-wide flex items-center justify-center space-x-2">
+                    <span id="btn-play-level-text">Jugar nivel 1</span>
                 </button>
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 2: MODO CLÁSICO (CATEGORÍAS AL AZAR) ==================== -->
-        <section id="screen-categories" class="app-screen hidden space-y-5">
-            <div class="flex items-center justify-between">
-                <button class="btn-home text-xs font-bold text-slate-400 hover:text-white flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 transition">
-                    <span>← Menú Principal</span>
-                </button>
-                <div class="text-center">
-                    <h2 class="text-xl font-bold">Modo Clásico (Aleatorio)</h2>
-                    <p class="text-[11px] text-slate-400">Palabras y cuadrículas generadas al azar</p>
+        <!-- ==================== PANTALLA 2: TABLERO DE JUEGO (MÁXIMO APROVECHAMIENTO) ==================== -->
+        <section id="screen-game" class="app-screen hidden flex flex-col justify-between h-full py-1 space-y-2">
+            
+            <!-- HUD Multijugador (si es 1 vs 1) -->
+            <div id="game-hud-multi" class="hidden bg-white/95 rounded-2xl p-2 px-3 flex items-center justify-between shadow border border-white flex-shrink-0">
+                <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span id="hud-player-name" class="text-xs font-extrabold text-slate-800">Tú</span>
+                    <span id="hud-player-pts" class="text-sm font-black text-emerald-600">0</span>
                 </div>
-                <div class="w-16"></div>
+                <span class="text-[10px] font-black text-slate-400">VS</span>
+                <div class="flex items-center space-x-2">
+                    <span id="hud-rival-pts" class="text-sm font-black text-amber-600">0</span>
+                    <span id="hud-rival-name" class="text-xs font-extrabold text-slate-800">Rival</span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                </div>
             </div>
 
-            <!-- Selector de Dificultad para el Modo Clásico -->
-            <div class="flex justify-center items-center space-x-2 bg-slate-800/90 p-1.5 rounded-2xl border border-slate-700 max-w-xs mx-auto shadow-inner">
-                <button data-diff="facil" class="classic-diff-pill flex-1">Fácil (10x10)</button>
-                <button data-diff="medio" class="classic-diff-pill flex-1 active">Medio (12x12)</button>
-                <button data-diff="dificil" class="classic-diff-pill flex-1">Difícil (14x14)</button>
+            <!-- 1. TARJETA DE BANCO DE PALABRAS (Igual a la referencia) -->
+            <div class="word-bank-card">
+                <div id="game-theme-banner" class="word-bank-header">
+                    EL REY DE LA SABANA
+                </div>
+                <div id="word-chips-container" class="p-2.5 flex flex-wrap justify-center gap-x-3 gap-y-1">
+                    <!-- Palabras en texto limpio y negrita -->
+                </div>
             </div>
 
-            <!-- Cuadrícula de Categorías Clásicas -->
-            <div id="classic-categories-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-                <!-- Inyectado por JS -->
+            <!-- 2. TABLERO BLANCO CENTRAL CON CÁPSULAS SVG -->
+            <div class="flex-1 flex items-center justify-center min-h-0">
+                <div class="puzzle-board-wrap">
+                    <!-- Capa de cápsulas pastel continuas (SVG) -->
+                    <svg id="board-svg-overlay" class="board-svg-overlay" preserveAspectRatio="none">
+                        <!-- Cápsulas de palabras encontradas y línea de arrastre en vivo -->
+                    </svg>
+                    <!-- Capa de letras en cuadrícula -->
+                    <div id="puzzle-board" class="puzzle-grid-layer">
+                        <!-- Letras generadas por JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. BARRA INFERIOR DE ACCIONES (ACCESIBLE AL PULGAR) -->
+            <div class="flex items-center justify-around py-1.5 px-2 flex-shrink-0">
+                <button id="btn-game-levels" class="btn-circle-green" title="Mapa de Niveles">
+                    <span class="text-lg">🗺️</span>
+                </button>
+
+                <button id="btn-game-classic" class="btn-circle-green" title="Partida al Azar">
+                    <span class="text-lg">🎲</span>
+                </button>
+
+                <!-- Reacciones (en multijugador) o Album -->
+                <button id="btn-game-album" class="btn-circle-green" title="Álbum de Cartas">
+                    <span class="text-lg">🖼️</span>
+                </button>
+
+                <!-- Botón Pista con costo/contador -->
+                <button id="btn-hint" class="btn-circle-green relative" title="Pista">
+                    <span class="text-xl">💡</span>
+                    <span id="hint-count-badge" class="absolute -bottom-1 -right-1 bg-amber-400 text-slate-900 text-[10px] font-black px-1.5 rounded-full border border-white shadow">
+                        3
+                    </span>
+                </button>
+
+                <!-- Botón Reiniciar / Nuevo Tablero Aleatorio -->
+                <button id="btn-shuffle-board" class="btn-circle-green" title="Regenerar Tablero">
+                    <span class="text-xl font-bold">↻</span>
+                </button>
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 3: MAPA DE AVENTURA ==================== -->
-        <section id="screen-adventure" class="app-screen hidden space-y-4 max-w-xl mx-auto">
-            <div class="flex items-center justify-between">
-                <button class="btn-home text-xs font-bold text-slate-400 hover:text-white flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 transition">
-                    <span>← Menú</span>
-                </button>
-                <div class="text-center">
-                    <h2 class="text-xl font-black text-white">Mundo 1: Expedición Salvaje</h2>
-                    <p class="text-[11px] text-indigo-400 font-semibold">Rescata animales y desbloquea sus cartas</p>
+        <!-- ==================== PANTALLA 3: MODO CLÁSICO (AL AZAR) ==================== -->
+        <section id="screen-categories" class="app-screen hidden space-y-3 py-2">
+            <div class="casual-card p-3 text-center">
+                <h2 class="text-lg font-extrabold text-slate-800">🎲 Modo Clásico (Al Azar)</h2>
+                <p class="text-[11px] text-slate-500">Cada partida genera palabras y posiciones aleatorias</p>
+                
+                <!-- Selector de Dificultad -->
+                <div class="flex justify-center space-x-1.5 bg-slate-100 p-1 rounded-xl mt-2.5">
+                    <button data-diff="facil" class="classic-diff-pill flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-600 transition">Fácil</button>
+                    <button data-diff="medio" class="classic-diff-pill flex-1 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white shadow transition active">Medio</button>
+                    <button data-diff="dificil" class="classic-diff-pill flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-600 transition">Difícil</button>
                 </div>
-                <div class="w-16"></div>
             </div>
 
-            <div id="adventure-levels-list" class="space-y-3">
-                <!-- Niveles inyectados dinámicamente -->
+            <div id="classic-categories-grid" class="grid grid-cols-2 gap-2.5 pb-2">
+                <!-- Categorías inyectadas por JS -->
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 4: ÁLBUM / MUSEO DE CARTAS ==================== -->
-        <section id="screen-album" class="app-screen hidden space-y-4">
-            <div class="flex items-center justify-between">
-                <button class="btn-home text-xs font-bold text-slate-400 hover:text-white flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 transition">
-                    <span>← Menú</span>
-                </button>
-                <div class="text-center">
-                    <h2 class="text-xl font-black text-white">Álbum de Colección</h2>
-                    <span id="album-count" class="text-xs font-bold text-amber-400">0/8 Desbloqueados</span>
-                </div>
-                <div class="w-16"></div>
+        <!-- ==================== PANTALLA 4: MAPA DE AVENTURA (NIVELES) ==================== -->
+        <section id="screen-adventure" class="app-screen hidden space-y-3 py-2">
+            <div class="casual-card p-3 text-center">
+                <h2 class="text-lg font-extrabold text-slate-800">🗺️ Expedición Salvaje</h2>
+                <p class="text-[11px] text-emerald-600 font-bold">Rescata especies y desbloquea sus cartas HD</p>
             </div>
+            <div id="adventure-levels-list" class="space-y-2.5 pb-2">
+                <!-- Niveles inyectados por JS -->
+            </div>
+        </section>
 
-            <div id="album-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+        <!-- ==================== PANTALLA 5: ÁLBUM DE COLECCIÓN ==================== -->
+        <section id="screen-album" class="app-screen hidden space-y-3 py-2">
+            <div class="casual-card p-3 flex items-center justify-between">
+                <h2 class="text-lg font-extrabold text-slate-800">📖 Álbum de Cartas</h2>
+                <span id="album-count" class="text-xs font-black bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">0/8</span>
+            </div>
+            <div id="album-grid" class="grid grid-cols-2 gap-2.5 pb-2">
                 <!-- Cartas inyectadas por JS -->
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 5: RANKING GLOBAL ==================== -->
-        <section id="screen-ranking" class="app-screen hidden space-y-4 max-w-md mx-auto">
-            <div class="flex items-center justify-between">
-                <button class="btn-home text-xs font-bold text-slate-400 hover:text-white flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 transition">
-                    <span>← Menú</span>
-                </button>
-                <h2 class="text-xl font-bold">Clasificación Mundial</h2>
-                <div class="w-16"></div>
+        <!-- ==================== PANTALLA 6: RANKING GLOBAL ==================== -->
+        <section id="screen-ranking" class="app-screen hidden space-y-3 py-2">
+            <div class="casual-card p-3 text-center">
+                <h2 class="text-lg font-extrabold text-slate-800">🏆 Ranking Mundial</h2>
+                <p class="text-[11px] text-slate-500">Suma puntos en Aventura, Clásico y 1 vs 1</p>
             </div>
-
-            <div id="ranking-list" class="space-y-2">
-                <!-- Tabla inyectada por JS -->
+            <div id="ranking-list" class="space-y-2 pb-2">
+                <!-- Ranking inyectado por JS -->
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 6: LOBBY MULTIJUGADOR ==================== -->
-        <section id="screen-lobby" class="app-screen hidden space-y-5 max-w-md mx-auto">
-            <div class="flex items-center justify-between">
-                <button class="btn-home text-xs font-bold text-slate-400 hover:text-white flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 transition">
-                    <span>← Menú</span>
-                </button>
-                <h2 class="text-xl font-bold">Sala Multijugador</h2>
-                <div class="w-16"></div>
-            </div>
+        <!-- ==================== PANTALLA 7: LOBBY MULTIJUGADOR ==================== -->
+        <section id="screen-lobby" class="app-screen hidden space-y-4 py-2">
+            <div class="casual-card p-5 space-y-4 text-center">
+                <h2 class="text-xl font-extrabold text-slate-800">⚔️ Duelo 1 vs 1 en Vivo</h2>
 
-            <div id="lobby-init" class="bg-slate-800/90 p-6 rounded-2xl border border-slate-700/80 space-y-6 shadow-xl backdrop-blur-md">
-                <div class="space-y-3 text-center">
-                    <h3 class="font-bold text-lg text-white">¿Quieres ser el anfitrión?</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Crea una sala y compite en vivo con un amigo desde cualquier lugar.</p>
-                    <button id="btn-host-room" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm transition shadow-lg shadow-indigo-600/30">
+                <div id="lobby-init" class="space-y-4">
+                    <p class="text-xs text-slate-500">Crea una sala privada o únete con el código de tu amigo para competir en el mismo tablero.</p>
+                    <button id="btn-host-room" class="btn-arcade-green w-full py-3 rounded-full font-bold text-base">
                         ✨ Crear Nueva Sala
                     </button>
-                </div>
 
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-slate-700"></div>
-                    <span class="flex-shrink mx-3 text-slate-500 text-[11px] font-bold uppercase">o únete a una</span>
-                    <div class="flex-grow border-t border-slate-700"></div>
-                </div>
+                    <div class="relative flex py-1 items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-3 text-slate-400 text-[10px] font-bold uppercase">o únete</span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
 
-                <div class="space-y-3">
-                    <label class="block text-xs font-semibold text-slate-400">Código de Sala:</label>
                     <div class="flex space-x-2">
-                        <input id="room-input-code" type="text" placeholder="Ej: 8K2M" maxlength="6" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-center font-mono font-bold tracking-widest text-lg uppercase focus:outline-none focus:border-indigo-500">
-                        <button id="btn-join-match" class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-bold text-sm transition">
-                            Unirse
+                        <input id="room-input-code" type="text" placeholder="CÓDIGO" maxlength="6" class="flex-1 bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-center font-mono font-bold tracking-widest text-slate-800 uppercase focus:outline-none focus:border-emerald-500">
+                        <button id="btn-join-match" class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold text-sm shadow">
+                            Entrar
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <div id="lobby-wait" class="hidden bg-slate-800/90 p-6 rounded-2xl border border-slate-700/80 space-y-5 text-center shadow-xl backdrop-blur-md">
-                <span class="text-5xl animate-bounce inline-block">📡</span>
-                <h3 class="text-xl font-bold">Sala Creada</h3>
-                <p class="text-xs text-slate-400">Comparte este código o enlace con tu rival:</p>
-
-                <div class="bg-slate-900 border border-indigo-500/40 p-4 rounded-xl">
-                    <span id="code-display" class="text-4xl font-mono font-black tracking-widest text-indigo-400">----</span>
-                </div>
-
-                <button id="btn-copy-link" class="w-full py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
-                    <span>🔗</span>
-                    <span>Copiar Enlace de Invitación</span>
-                </button>
-
-                <p id="wait-status-msg" class="text-xs text-amber-400 font-semibold animate-pulse">
-                    Esperando a que se conecte el rival...
-                </p>
-
-                <button id="btn-launch-match" class="hidden w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition shadow-lg shadow-emerald-600/30">
-                    🚀 ¡Comenzar Duelo!
-                </button>
-            </div>
-        </section>
-
-        <!-- ==================== PANTALLA 7: TABLERO DE JUEGO ==================== -->
-        <section id="screen-game" class="app-screen hidden space-y-3.5">
-            <div class="flex items-center justify-between bg-slate-800/80 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-slate-700/60 shadow">
-                <button class="btn-home text-xs font-bold text-slate-400 hover:text-white px-2.5 py-1.5 rounded-xl bg-slate-700/80 transition">
-                    ✕ Salir
-                </button>
-
-                <div class="text-center">
-                    <span id="game-title-badge" class="font-bold text-xs sm:text-sm text-white">Nivel</span>
-                </div>
-
-                <div class="flex items-center space-x-2.5">
-                    <button id="btn-hint" class="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/30 transition flex items-center space-x-1" title="Pista de primera letra">
-                        <span>💡</span>
-                        <span id="hint-count-badge">3</span>
+                <div id="lobby-wait" class="hidden space-y-4">
+                    <div class="text-4xl animate-bounce">📡</div>
+                    <div class="bg-slate-100 border-2 border-dashed border-emerald-400 p-3 rounded-2xl">
+                        <span class="text-[10px] font-bold text-slate-500 block">CÓDIGO DE SALA</span>
+                        <span id="code-display" class="text-3xl font-mono font-black tracking-widest text-emerald-600">----</span>
+                    </div>
+                    <button id="btn-copy-link" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition">
+                        🔗 Copiar Enlace de Invitación
                     </button>
-                    <span id="hud-time-display" class="font-mono text-sm sm:text-base font-black text-indigo-400">00:00</span>
-                </div>
-            </div>
-
-            <!-- Barra de Progreso -->
-            <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden border border-slate-700/60 flex items-center">
-                <div id="hud-progress-bar" class="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full transition-all duration-300 rounded-full" style="width: 0%"></div>
-            </div>
-
-            <!-- HUD Multijugador -->
-            <div id="game-hud-multi" class="hidden flex items-center justify-between bg-slate-800/90 p-3 rounded-2xl border border-slate-700">
-                <div class="flex items-center space-x-2">
-                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
-                    <div>
-                        <div id="hud-player-name" class="text-xs font-bold text-emerald-300">Tú</div>
-                        <div class="text-lg font-black text-emerald-400"><span id="hud-player-pts">0</span> pts</div>
-                    </div>
-                </div>
-
-                <div class="text-[10px] font-black uppercase tracking-widest text-slate-500">VS</div>
-
-                <div class="flex items-center space-x-2 text-right">
-                    <div>
-                        <div id="hud-rival-name" class="text-xs font-bold text-amber-300">Rival</div>
-                        <div class="text-lg font-black text-amber-400"><span id="hud-rival-pts">0</span> pts</div>
-                    </div>
-                    <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
-                </div>
-            </div>
-
-            <!-- Reacciones Rápidas -->
-            <div id="game-reaction-bar" class="hidden flex justify-center space-x-3">
-                <button data-emoji="🔥" class="btn-emoji text-xl hover:scale-125 transition">🔥</button>
-                <button data-emoji="🎉" class="btn-emoji text-xl hover:scale-125 transition">🎉</button>
-                <button data-emoji="🚀" class="btn-emoji text-xl hover:scale-125 transition">🚀</button>
-                <button data-emoji="😱" class="btn-emoji text-xl hover:scale-125 transition">😱</button>
-                <button data-emoji="👏" class="btn-emoji text-xl hover:scale-125 transition">👏</button>
-            </div>
-
-            <!-- CUADRÍCULA DEL TABLERO -->
-            <div class="flex justify-center">
-                <div id="puzzle-board" class="puzzle-board-container">
-                    <!-- Generado dinámicamente -->
-                </div>
-            </div>
-
-            <!-- BANCO DE PALABRAS -->
-            <div class="bg-slate-800/80 backdrop-blur-md p-3.5 rounded-2xl border border-slate-700/60 shadow">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Palabras a encontrar:</span>
-                    <span id="hud-count-display" class="text-xs font-extrabold text-indigo-400">0/6</span>
-                </div>
-                <div id="word-chips-container" class="flex flex-wrap gap-2 justify-center">
-                    <!-- Chips generados dinámicamente -->
+                    <p id="wait-status-msg" class="text-xs text-amber-600 font-bold animate-pulse">
+                        Esperando al rival...
+                    </p>
+                    <button id="btn-launch-match" class="hidden btn-arcade-green w-full py-3 rounded-full font-bold text-base">
+                        🚀 ¡Comenzar Duelo!
+                    </button>
                 </div>
             </div>
         </section>
 
-        <!-- ==================== PANTALLA 8: CREADOR DE SOPA ==================== -->
-        <section id="screen-creator" class="app-screen hidden space-y-5 max-w-md mx-auto">
-            <div class="flex items-center justify-between">
-                <button class="btn-home text-xs font-bold text-slate-400 hover:text-white flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 transition">
-                    <span>← Menú</span>
-                </button>
-                <h2 class="text-xl font-bold">Crear mi Sopa</h2>
-                <div class="w-16"></div>
+        <!-- ==================== PANTALLA 8: CREADOR PERSONALIZADO ==================== -->
+        <section id="screen-creator" class="app-screen hidden space-y-3 py-2">
+            <div class="casual-card p-5 space-y-4">
+                <h2 class="text-lg font-extrabold text-slate-800 text-center">✏️ Crear Sopa Propia</h2>
+                <form id="form-create-puzzle" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Título:</label>
+                        <input id="custom-title" type="text" placeholder="Ej: Mi Familia" required class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Palabras (separadas por coma):</label>
+                        <textarea id="custom-words" rows="4" placeholder="MAMA, PAPA, PERRO, GATO, CASA" required class="w-full bg-slate-100 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 uppercase focus:outline-none focus:border-emerald-500"></textarea>
+                    </div>
+                    <button type="submit" class="btn-arcade-green w-full py-3 rounded-full font-bold text-base">
+                        ▶ Jugar Ahora
+                    </button>
+                </form>
             </div>
-
-            <form id="form-create-puzzle" class="bg-slate-800/90 p-5 rounded-2xl border border-slate-700/80 space-y-4 shadow-xl backdrop-blur-md">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Título de la Sopa:</label>
-                    <input id="custom-title" type="text" placeholder="Ej: Mis Héroes Favoritos" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Palabras (separadas por comas o saltos de línea):</label>
-                    <textarea id="custom-words" rows="5" placeholder="BATMAN, SUPERMAN, FLASH, SPIDERMAN, THOR, HULK" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500 uppercase"></textarea>
-                    <span class="text-[11px] text-slate-400">Mínimo 4 palabras (de 3 a 12 letras cada una).</span>
-                </div>
-
-                <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white transition shadow-lg shadow-indigo-600/30">
-                    💾 Iniciar Partida
-                </button>
-            </form>
         </section>
+
     </main>
 
+    <!-- ==================== BARRA INFERIOR DE NAVEGACIÓN (BOTTOM DOCK) ==================== -->
+    <nav id="bottom-nav-dock" class="bottom-nav-dock">
+        <div class="bottom-nav-item" data-nav="categories">
+            <span class="nav-icon">🎲</span>
+            <span>Clásico</span>
+        </div>
+        <div class="bottom-nav-item" data-nav="ranking">
+            <span class="nav-icon">🏆</span>
+            <span>Ranking</span>
+        </div>
+        <div class="bottom-nav-item active" data-nav="menu">
+            <span class="nav-icon">🏠</span>
+            <span>Hogar</span>
+        </div>
+        <div class="bottom-nav-item" data-nav="album">
+            <span class="nav-icon">📖</span>
+            <span>Álbum</span>
+        </div>
+        <div class="bottom-nav-item" data-nav="lobby">
+            <span class="nav-icon">⚔️</span>
+            <span>1 vs 1</span>
+        </div>
+    </nav>
+
     <!-- ==================== MODAL DE RECOMPENSA (CARTA DESBLOQUEADA) ==================== -->
-    <div id="modal-reward-card" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="reward-modal-card w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4 text-center">
-            <div class="flex items-center justify-between">
-                <span id="reward-modal-title" class="text-sm font-black text-amber-300 uppercase tracking-wider">🎉 ¡CARTA DESBLOQUEADA!</span>
-                <button id="btn-close-reward-modal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+    <div id="modal-reward-card" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="casual-card w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl text-center">
+            <div class="word-bank-header py-3 text-base flex items-center justify-between px-4">
+                <span id="reward-modal-title">🎉 ¡NIVEL SUPERADO!</span>
+                <button id="btn-close-reward-modal" class="text-white/80 hover:text-white font-bold">✕</button>
             </div>
 
-            <!-- Tarjeta Visual Coleccionable -->
-            <div class="bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-inner">
-                <div class="relative w-full aspect-video overflow-hidden">
-                    <img id="reward-card-img" src="" alt="Animal" class="w-full h-full object-cover">
-                    <span id="reward-card-rarity" class="absolute top-2.5 right-2.5 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border border-white/20">
-                        Raro
-                    </span>
-                </div>
-                <div class="p-3.5 text-left space-y-1">
-                    <div class="flex items-center justify-between">
-                        <h4 id="reward-card-name" class="text-base font-bold text-white">León</h4>
-                        <span id="reward-points-badge" class="text-xs font-mono font-bold text-emerald-400">+600 PTS</span>
+            <div class="p-4 space-y-3">
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden shadow-inner">
+                    <div class="relative w-full aspect-video overflow-hidden">
+                        <img id="reward-card-img" src="" alt="Animal" class="w-full h-full object-cover">
+                        <span id="reward-card-rarity" class="absolute top-2 right-2 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-white/90 shadow">
+                            Raro
+                        </span>
                     </div>
-                    <div id="reward-card-scientific" class="text-[11px] text-indigo-300 italic font-medium">Panthera leo</div>
-                    <p id="reward-card-desc" class="text-xs text-slate-300 pt-1 leading-relaxed"></p>
+                    <div class="p-3 text-left space-y-1">
+                        <div class="flex items-center justify-between">
+                            <h4 id="reward-card-name" class="text-base font-extrabold text-slate-800">León</h4>
+                            <span id="reward-points-badge" class="text-xs font-mono font-black text-emerald-600">+600 🪙</span>
+                        </div>
+                        <div id="reward-card-scientific" class="text-[11px] text-indigo-600 italic font-semibold">Panthera leo</div>
+                        <p id="reward-card-desc" class="text-xs text-slate-600 pt-1 leading-relaxed"></p>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Estrellas conseguidas -->
-            <div id="reward-stars-container" class="text-amber-400 text-xl tracking-widest">
-                ★★★
-            </div>
+                <div id="reward-stars-container" class="text-amber-400 text-2xl tracking-widest">
+                    ★★★
+                </div>
 
-            <div class="flex space-x-2 pt-1">
-                <button id="btn-next-level" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/30 transition">
+                <button id="btn-next-level" class="btn-arcade-green w-full py-3 rounded-full font-game text-lg font-bold">
                     ➔ Siguiente Nivel
                 </button>
             </div>
@@ -433,43 +391,35 @@
 
     <!-- ==================== MODAL DE PERFIL ==================== -->
     <div id="modal-profile-edit" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-white">Editar Perfil</h3>
-                <button id="btn-close-prof-modal" class="text-slate-400 hover:text-white">✕</button>
+        <div class="casual-card w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
+            <div class="word-bank-header py-3 flex items-center justify-between px-4">
+                <span>Editar Jugador</span>
+                <button id="btn-close-prof-modal" class="text-white font-bold">✕</button>
             </div>
-
-            <form id="form-edit-profile" class="space-y-4">
+            <form id="form-edit-profile" class="p-5 space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre o Apodo:</label>
-                    <input id="prof-input-name" type="text" maxlength="15" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Apodo:</label>
+                    <input id="prof-input-name" type="text" maxlength="15" required class="w-full bg-slate-100 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-bold focus:outline-none focus:border-emerald-500">
                 </div>
-
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Avatar:</label>
-                    <select id="prof-select-avatar" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Avatar:</label>
+                    <select id="prof-select-avatar" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-bold focus:outline-none focus:border-emerald-500">
                         <option value="🦊">🦊 Zorro Astuto</option>
+                        <option value="🐶">🐶 Cachorro Fiel</option>
                         <option value="🦁">🦁 León Valiente</option>
                         <option value="🐯">🐯 Tigre Veloz</option>
                         <option value="🐼">🐼 Panda Sabio</option>
                         <option value="🚀">🚀 Astronauta</option>
                         <option value="⚡">⚡ Rayo</option>
                         <option value="🧙‍♂️">🧙‍♂️ Mago</option>
-                        <option value="👾">👾 Gamer Pro</option>
                     </select>
                 </div>
-
-                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white transition">
+                <button type="submit" class="btn-arcade-green w-full py-3 rounded-full font-bold text-base">
                     Guardar Perfil
                 </button>
             </form>
         </div>
     </div>
-
-    <!-- PIE DE PÁGINA -->
-    <footer class="text-center text-[11px] text-slate-500 py-3">
-        PalabraMania • Sopa de Letras, Modo Aventura y Partidas al Azar
-    </footer>
 
     <!-- CARGA DIRECTA DE SCRIPT COMPATIBLE CON FILE:/// Y WEB -->
     <script src="js/bundle.js"></script>

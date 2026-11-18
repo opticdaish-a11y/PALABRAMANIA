@@ -1,12 +1,23 @@
-// js/bundle.js - Modo Aventura, Modo Clásico (Palabras al azar), Multijugador, Códice y Ranking
+// js/bundle.js - Motor Casual Móvil con Cápsulas SVG, Aventura, Modo Clásico Al Azar, Multijugador y Ranking
 
 (function () {
     'use strict';
 
     // ==========================================
-    // 1. BANCO DE NIVELES DEL MODO AVENTURA (Curados con historia y fotos HD)
+    // 1. BANCO DE NIVELES DEL MODO AVENTURA
     // ==========================================
     const SPANISH_LETTER_FREQUENCY = 'AAAAAAAAAEEEEEEEEEEIIIIIIOOOOOOOUUUUUUBBCDDEEEFFGGHHIIJKLLLMNNNÑÑOOOPQRRRSSSTTTUVXYZ';
+
+    const PASTEL_CAPSULE_COLORS = [
+        '#5eead4', // Turquesa menta
+        '#fca5a5', // Salmón coral
+        '#86efac', // Verde lima suave
+        '#f0abfc', // Lavanda rosa
+        '#a5b4fc', // Índigo pastel
+        '#fde047', // Amarillo cálido
+        '#fdba74', // Naranja melocotón
+        '#93c5fd'  // Azul cielo
+    ];
 
     const ADVENTURE_LEVELS = [
         {
@@ -148,84 +159,32 @@
     ];
 
     // ==========================================
-    // 2. BANCO DE CATEGORÍAS PARA EL MODO CLÁSICO (Palabras 100% Aleatorias en cada partida)
+    // 2. CATEGORÍAS MODO CLÁSICO (100% AL AZAR)
     // ==========================================
     const CLASSIC_CATEGORIES = {
         animales: {
-            id: 'animales',
-            name: 'Reino Animal',
-            icon: '🦁',
-            badge: 'Popular',
-            description: 'Mamíferos, aves, reptiles y criaturas acuáticas',
-            words: [
-                'LEON', 'TIGRE', 'ELEFANTE', 'JIRAFA', 'DELFIN', 'BALLENA', 'AGUILA',
-                'HALCON', 'PINGUINO', 'CANGURO', 'KOALA', 'LEOPARDO', 'PANDA', 'CEBRA',
-                'CAMALEON', 'COLIBRI', 'LOBO', 'ZORRO', 'JAGUAR', 'TORTUGA', 'RINOCERONTE',
-                'HIPOPOTAMO', 'COCODRILO', 'PANTERA', 'FLAMENCO', 'GORILA', 'LEMUR', 'MAPACHE'
-            ]
+            id: 'animales', name: 'Reino Animal', icon: '🦁',
+            words: ['LEON', 'TIGRE', 'ELEFANTE', 'JIRAFA', 'DELFIN', 'BALLENA', 'AGUILA', 'HALCON', 'PINGUINO', 'CANGURO', 'KOALA', 'LEOPARDO', 'PANDA', 'CEBRA', 'CAMALEON', 'COLIBRI', 'LOBO', 'ZORRO', 'JAGUAR', 'TORTUGA', 'RINOCERONTE', 'HIPOPOTAMO', 'COCODRILO', 'PANTERA', 'FLAMENCO', 'GORILA']
         },
         paises: {
-            id: 'paises',
-            name: 'Países del Mundo',
-            icon: '🌎',
-            badge: 'Geografía',
-            description: 'Naciones, capitales y geografías de todos los continentes',
-            words: [
-                'MEXICO', 'ESPANA', 'ARGENTINA', 'COLOMBIA', 'CHILE', 'PERU', 'BRASIL',
-                'CANADA', 'FRANCIA', 'ITALIA', 'ALEMANIA', 'JAPON', 'AUSTRALIA', 'PORTUGAL',
-                'URUGUAY', 'ECUADOR', 'GRECIA', 'EGIPTO', 'SUIZA', 'NORUEGA', 'SUECIA',
-                'HOLANDA', 'TURQUIA', 'FINLANDIA', 'AUSTRIA', 'BELGICA', 'PANAMA', 'IRLANDA'
-            ]
+            id: 'paises', name: 'Países del Mundo', icon: '🌎',
+            words: ['MEXICO', 'ESPANA', 'ARGENTINA', 'COLOMBIA', 'CHILE', 'PERU', 'BRASIL', 'CANADA', 'FRANCIA', 'ITALIA', 'ALEMANIA', 'JAPON', 'AUSTRALIA', 'PORTUGAL', 'URUGUAY', 'ECUADOR', 'GRECIA', 'EGIPTO', 'SUIZA', 'NORUEGA', 'SUECIA', 'HOLANDA', 'TURQUIA', 'FINLANDIA']
         },
         tecnologia: {
-            id: 'tecnologia',
-            name: 'Mundo Tech & Ciencia',
-            icon: '💻',
-            badge: 'Digital',
-            description: 'Informática, desarrollo, inteligencia artificial y telecomunicaciones',
-            words: [
-                'ALGORITMO', 'INTERNET', 'ROBOT', 'SATELITE', 'SOFTWARE', 'HARDWARE',
-                'CODIGO', 'PROGRAMA', 'DATOS', 'SERVIDOR', 'PANTALLA', 'CELULAR',
-                'NUBE', 'DATABASE', 'CONEXION', 'PROCESADOR', 'MEMORIA', 'SISTEMA',
-                'TECLADO', 'COMPUTADORA', 'ROUTER', 'BITCOIN', 'ARCHIVO', 'MODEM', 'DIGITAL'
-            ]
+            id: 'tecnologia', name: 'Mundo Tech', icon: '💻',
+            words: ['ALGORITMO', 'INTERNET', 'ROBOT', 'SATELITE', 'SOFTWARE', 'HARDWARE', 'CODIGO', 'PROGRAMA', 'DATOS', 'SERVIDOR', 'PANTALLA', 'CELULAR', 'NUBE', 'DATABASE', 'CONEXION', 'PROCESADOR', 'MEMORIA', 'SISTEMA', 'TECLADO', 'ROUTER', 'BITCOIN', 'ARCHIVO']
         },
         gastronomia: {
-            id: 'gastronomia',
-            name: 'Gastronomía & Frutas',
-            icon: '🍕',
-            badge: 'Delicioso',
-            description: 'Comidas internacionales, frutas frescas y delicias culinarias',
-            words: [
-                'MANZANA', 'PLATANO', 'FRESA', 'NARANJA', 'AGUACATE', 'SANDIA', 'CEREZA',
-                'CHOCOLATE', 'PIZZA', 'PASTA', 'BURGUER', 'TACO', 'MANGO', 'LIMON',
-                'VAINILLA', 'CANELA', 'GALLETA', 'QUESO', 'PIÑA', 'PASTEL', 'HELADO',
-                'SUSHI', 'ARROZ', 'PAN', 'TORTILLA', 'LASAÑA', 'CAFÉ', 'TOMATE'
-            ]
+            id: 'gastronomia', name: 'Gastronomía', icon: '🍕',
+            words: ['MANZANA', 'PLATANO', 'FRESA', 'NARANJA', 'AGUACATE', 'SANDIA', 'CEREZA', 'CHOCOLATE', 'PIZZA', 'PASTA', 'BURGUER', 'TACO', 'MANGO', 'LIMON', 'VAINILLA', 'CANELA', 'GALLETA', 'QUESO', 'PIÑA', 'PASTEL', 'HELADO', 'SUSHI', 'ARROZ', 'PAN', 'TORTILLA']
         },
         deportes: {
-            id: 'deportes',
-            name: 'Deportes Olímpicos',
-            icon: '⚽',
-            badge: 'Acción',
-            description: 'Disciplinas atléticas, balones, velocidad y competición',
-            words: [
-                'FUTBOL', 'BASKET', 'NATACION', 'CICLISMO', 'TENIS', 'VOLEIBOL', 'ATLETISMO',
-                'BOXEO', 'KARATE', 'BEISBOL', 'GOLF', 'PATINAJE', 'ESQUI', 'RUGBY',
-                'GIMNASIA', 'AJEDREZ', 'SURF', 'MARATON', 'REMO', 'ESGRIMA', 'HOCKEY', 'JUDO'
-            ]
+            id: 'deportes', name: 'Deportes', icon: '⚽',
+            words: ['FUTBOL', 'BASKET', 'NATACION', 'CICLISMO', 'TENIS', 'VOLEIBOL', 'ATLETISMO', 'BOXEO', 'KARATE', 'BEISBOL', 'GOLF', 'PATINAJE', 'ESQUI', 'RUGBY', 'GIMNASIA', 'AJEDREZ', 'SURF', 'MARATON', 'REMO', 'ESGRIMA', 'HOCKEY', 'JUDO']
         },
         universo: {
-            id: 'universo',
-            name: 'Cosmos & Astronomía',
-            icon: '🚀',
-            badge: 'Espacio',
-            description: 'Astros, galaxias lejanas, nebulosas y exploración espacial',
-            words: [
-                'GALAXIA', 'PLANETA', 'ESTRELLA', 'COMETA', 'ASTEROIDE', 'ORBITA', 'GRAVEDAD',
-                'TELESCOPIO', 'ASTRONAUTA', 'MARTE', 'JUPITER', 'SATURNO', 'NEBULOSA',
-                'LUNA', 'SOL', 'ECLIPSE', 'COSMOS', 'UNIVERSO', 'METEORITO', 'SUPERNOVA'
-            ]
+            id: 'universo', name: 'Cosmos', icon: '🚀',
+            words: ['GALAXIA', 'PLANETA', 'ESTRELLA', 'COMETA', 'ASTEROIDE', 'ORBITA', 'GRAVEDAD', 'TELESCOPIO', 'ASTRONAUTA', 'MARTE', 'JUPITER', 'SATURNO', 'NEBULOSA', 'LUNA', 'SOL', 'ECLIPSE', 'COSMOS', 'UNIVERSO', 'METEORITO', 'SUPERNOVA']
         }
     };
 
@@ -234,7 +193,7 @@
     }
 
     // ==========================================
-    // 3. SISTEMA DE AUDIO (Web Audio API)
+    // 3. SISTEMA DE AUDIO
     // ==========================================
     class SoundEngine {
         constructor() {
@@ -265,9 +224,9 @@
                 const gain = this.ctx.createGain();
                 const now = this.ctx.currentTime;
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(520, now);
-                osc.frequency.exponentialRampToValueAtTime(780, now + 0.04);
-                gain.gain.setValueAtTime(0.06, now);
+                osc.frequency.setValueAtTime(540, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
+                gain.gain.setValueAtTime(0.05, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -363,7 +322,7 @@
     const sound = new SoundEngine();
 
     // ==========================================
-    // 4. GENERADOR DE CUADRÍCULA (Aleatorio & Aventura)
+    // 4. GENERADOR DE CUADRÍCULA
     // ==========================================
     const DIRECTIONS = {
         H_LR: [0, 1], H_RL: [0, -1], V_TB: [1, 0], V_BT: [-1, 0],
@@ -371,31 +330,23 @@
     };
 
     const PRESETS = {
-        facil: { size: 10, count: 6, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB] },
-        medio: { size: 12, count: 8, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB, DIRECTIONS.D_DR, DIRECTIONS.D_UR] },
-        dificil: { size: 14, count: 10, dirs: Object.values(DIRECTIONS) }
+        facil: { size: 9, count: 6, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB] },
+        medio: { size: 11, count: 8, dirs: [DIRECTIONS.H_LR, DIRECTIONS.V_TB, DIRECTIONS.D_DR, DIRECTIONS.D_UR] },
+        dificil: { size: 13, count: 10, dirs: Object.values(DIRECTIONS) }
     };
 
     class Generator {
-        /**
-         * Genera tablero con palabras seleccionadas al azar de un banco (Modo Clásico)
-         */
         static createRandom(fullWordList, difficulty = 'medio') {
             const config = PRESETS[difficulty] || PRESETS.medio;
             const cleaned = fullWordList
                 .map(w => sanitizeWord(w))
                 .filter(w => w.length >= 3 && w.length <= config.size);
 
-            // Barajar aleatoriamente y seleccionar una muestra única
             const shuffled = [...cleaned].sort(() => Math.random() - 0.5);
             const selected = shuffled.slice(0, config.count);
-
             return this.buildBoard(selected, difficulty);
         }
 
-        /**
-         * Genera tablero con palabras fijas predefinidas (Modo Aventura)
-         */
         static createFixed(words, difficulty = 'medio') {
             const cleaned = words.map(w => sanitizeWord(w));
             return this.buildBoard(cleaned, difficulty);
@@ -415,7 +366,6 @@
                 if (res) placed.push(res);
             }
 
-            // Relleno de letras aleatorias balanceadas
             for (let r = 0; r < size; r++) {
                 for (let c = 0; c < size; c++) {
                     if (grid[r][c] === '') {
@@ -436,7 +386,7 @@
 
         static placeWord(grid, word, size, dirs) {
             const len = word.length;
-            for (let attempt = 0; attempt < 120; attempt++) {
+            for (let attempt = 0; attempt < 150; attempt++) {
                 const dir = dirs[Math.floor(Math.random() * dirs.length)];
                 const [dr, dc] = dir;
 
@@ -502,7 +452,7 @@
     }
 
     // ==========================================
-    // 5. STORAGE, PROGRESIÓN Y RANKING
+    // 5. STORAGE Y RANKING
     // ==========================================
     const DEFAULT_LEADERBOARD = [
         { rank: 1, name: "Valentina_Pro", country: "🇲🇽", points: 8450, badge: "Maestro Supremo", avatar: "🦁" },
@@ -510,7 +460,7 @@
         { rank: 3, name: "Camila_Sopa", country: "🇨🇱", points: 6100, badge: "Experto Táctico", avatar: "🦊" },
         { rank: 4, name: "Lucas_Gamer", country: "🇦🇷", points: 5350, badge: "Explorador", avatar: "🚀" },
         { rank: 5, name: "Sofia_Puzzles", country: "🇨🇴", points: 4800, badge: "Explorador", avatar: "🐼" },
-        { rank: 6, name: "Mateo_99", country: "🇵🇪", points: 3950, badge: "Aprendiz", avatar: "👾" },
+        { rank: 6, name: "Mateo_99", country: "🇵🇪", points: 3950, badge: "Aprendiz", avatar: "🐶" },
         { rank: 7, name: "Daniela_CR", country: "🇨🇷", points: 3100, badge: "Aprendiz", avatar: "🧙‍♂️" }
     ];
 
@@ -575,8 +525,7 @@
         static getLeaderboard() {
             const profile = this.getProfile();
             const list = [...DEFAULT_LEADERBOARD];
-
-            const userEntry = {
+            list.push({
                 rank: 0,
                 name: `${profile.name} (Tú)`,
                 country: "🌎",
@@ -584,12 +533,9 @@
                 badge: profile.rank,
                 avatar: profile.avatar,
                 isUser: true
-            };
-
-            list.push(userEntry);
+            });
             list.sort((a, b) => b.points - a.points);
             list.forEach((item, index) => { item.rank = index + 1; });
-
             return list;
         }
     }
@@ -663,11 +609,11 @@
     }
 
     // ==========================================
-    // 7. CONTROLADOR PRINCIPAL DE LA APP
+    // 7. CONTROLADOR PRINCIPAL CASUAL MÓVIL
     // ==========================================
     class AppController {
         constructor() {
-            this.mode = 'adventure'; // 'adventure' | 'classic' | 'multi'
+            this.mode = 'adventure';
             this.currentLevel = null;
             this.classicCategory = null;
             this.classicDiff = 'medio';
@@ -681,6 +627,7 @@
             this.isDragging = false;
             this.startCell = null;
             this.selectedCells = [];
+            this.colorIndex = 0;
 
             this.multiplayer = new Multiplayer({
                 onCreated: (code) => {
@@ -700,57 +647,78 @@
             });
 
             this.bindUI();
-            this.renderProfile();
+            this.renderHubInfo();
         }
 
         bindUI() {
-            // MODO AVENTURA
-            document.getElementById('btn-adventure-mode').onclick = () => {
-                this.renderAdventureMap();
-                this.nav('adventure');
-            };
-
-            // MODO CLÁSICO (PALABRAS AL AZAR)
-            document.getElementById('btn-classic-mode').onclick = () => {
-                this.renderClassicCategories();
-                this.nav('categories');
-            };
-
-            // Selector de dificultad en modo clásico
-            document.querySelectorAll('.classic-diff-pill').forEach(btn => {
-                btn.onclick = () => {
-                    document.querySelectorAll('.classic-diff-pill').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    this.classicDiff = btn.dataset.diff;
+            // Navegación barra inferior (Bottom Dock)
+            document.querySelectorAll('.bottom-nav-item').forEach(item => {
+                item.onclick = () => {
+                    const target = item.dataset.nav;
+                    if (target === 'categories') this.renderClassicCategories();
+                    if (target === 'ranking') this.renderLeaderboard();
+                    if (target === 'album') this.renderAlbum();
+                    if (target === 'menu') this.renderHubInfo();
+                    this.nav(target);
                 };
             });
 
-            // Álbum de Cartas
-            document.getElementById('btn-album-mode').onclick = () => {
+            // Botón Superior Volver
+            document.getElementById('btn-top-back').onclick = () => {
+                this.stopTimer();
+                this.renderHubInfo();
+                this.nav('menu');
+            };
+
+            // Botón Gigante "Jugar Nivel X" en el Hub
+            document.getElementById('btn-play-current-level').onclick = () => {
+                const prog = Storage.getAdventureProgress();
+                const lvl = ADVENTURE_LEVELS.find(l => l.id === prog.maxLevel) || ADVENTURE_LEVELS[0];
+                this.startAdventureLevel(lvl);
+            };
+
+            // Botones rápidos del Hub
+            document.getElementById('btn-quick-levels').onclick = () => {
+                this.renderAdventureMap();
+                this.nav('adventure');
+            };
+            document.getElementById('btn-quick-custom').onclick = () => this.nav('creator');
+
+            // Botones inferiores durante el juego (Thumb Dock)
+            document.getElementById('btn-game-levels').onclick = () => {
+                this.stopTimer();
+                this.renderAdventureMap();
+                this.nav('adventure');
+            };
+            document.getElementById('btn-game-classic').onclick = () => {
+                this.stopTimer();
+                this.renderClassicCategories();
+                this.nav('categories');
+            };
+            document.getElementById('btn-game-album').onclick = () => {
+                this.stopTimer();
                 this.renderAlbum();
                 this.nav('album');
             };
-
-            // Multijugador
-            document.getElementById('btn-multi-mode').onclick = () => {
-                this.mode = 'multi';
-                this.nav('lobby');
+            document.getElementById('btn-hint').onclick = () => this.useHint();
+            document.getElementById('btn-shuffle-board').onclick = () => {
+                if (this.mode === 'adventure' && this.currentLevel) {
+                    this.startAdventureLevel(this.currentLevel);
+                } else if (this.mode === 'classic' && this.classicCategory) {
+                    this.startClassicGame(this.classicCategory);
+                }
             };
 
-            // Ranking
-            document.getElementById('btn-ranking-mode').onclick = () => {
-                this.renderLeaderboard();
-                this.nav('ranking');
-            };
-
-            // Creador
-            document.getElementById('btn-custom-mode').onclick = () => this.nav('creator');
-
-            // Volver
-            document.querySelectorAll('.btn-home').forEach(b => {
-                b.onclick = () => {
-                    this.stopTimer();
-                    this.nav('menu');
+            // Selector de dificultad en Modo Clásico
+            document.querySelectorAll('.classic-diff-pill').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.classic-diff-pill').forEach(b => {
+                        b.classList.remove('active', 'bg-emerald-500', 'text-white', 'shadow');
+                        b.classList.add('text-slate-600');
+                    });
+                    btn.classList.add('active', 'bg-emerald-500', 'text-white', 'shadow');
+                    btn.classList.remove('text-slate-600');
+                    this.classicDiff = btn.dataset.diff;
                 };
             });
 
@@ -759,9 +727,6 @@
                 const on = sound.toggle();
                 document.getElementById('sound-icon').textContent = on ? '🔊' : '🔇';
             };
-
-            // Pista
-            document.getElementById('btn-hint').onclick = () => this.useHint();
 
             // Multijugador Lobby
             document.getElementById('btn-host-room').onclick = () => this.multiplayer.createRoom();
@@ -774,21 +739,11 @@
                 navigator.clipboard.writeText(url).then(() => alert('¡Enlace de invitación copiado!'));
             };
             document.getElementById('btn-launch-match').onclick = () => {
-                // En multijugador se eligen palabras al azar de una categoría aleatoria
                 const cats = Object.values(CLASSIC_CATEGORIES);
                 const randomCat = cats[Math.floor(Math.random() * cats.length)];
                 const p = Generator.createRandom(randomCat.words, 'medio');
                 this.multiplayer.startMatch(p);
             };
-
-            // Reacciones
-            document.querySelectorAll('.btn-emoji').forEach(b => {
-                b.onclick = () => {
-                    const em = b.dataset.emoji;
-                    this.multiplayer.sendEmoji(em);
-                    this.spawnEmoji(em, true);
-                };
-            });
 
             // Perfil Modal
             document.getElementById('btn-profile-card').onclick = () => {
@@ -808,18 +763,17 @@
                 p.name = document.getElementById('prof-input-name').value.trim() || 'Cazapalabras';
                 p.avatar = document.getElementById('prof-select-avatar').value;
                 Storage.saveProfile(p);
-                this.renderProfile();
+                this.renderHubInfo();
                 document.getElementById('modal-profile-edit').classList.add('hidden');
             };
 
-            // Modal Recompensa Cerrar
+            // Modal Recompensa
             document.getElementById('btn-close-reward-modal').onclick = () => {
                 document.getElementById('modal-reward-card').classList.add('hidden');
-                this.renderAdventureMap();
-                this.nav('adventure');
+                this.renderHubInfo();
+                this.nav('menu');
             };
 
-            // Siguiente Nivel desde Modal
             document.getElementById('btn-next-level').onclick = () => {
                 document.getElementById('modal-reward-card').classList.add('hidden');
                 if (this.currentLevel && this.currentLevel.id < ADVENTURE_LEVELS.length) {
@@ -831,20 +785,20 @@
                 }
             };
 
-            // Creador
+            // Creador personalizado
             document.getElementById('form-create-puzzle').onsubmit = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('custom-title').value.trim();
                 const raw = document.getElementById('custom-words').value.split(/[,\n]/);
-                const words = raw.map(w => sanitizeWord(w)).filter(w => w.length >= 3 && w.length <= 14);
+                const words = raw.map(w => sanitizeWord(w)).filter(w => w.length >= 3 && w.length <= 13);
                 if (words.length < 4) { alert('Introduce al menos 4 palabras válidas.'); return; }
 
                 this.mode = 'classic';
                 this.puzzle = Generator.createFixed(words, 'medio');
                 this.hintsLeft = 3;
                 document.getElementById('game-hud-multi').classList.add('hidden');
-                document.getElementById('game-reaction-bar').classList.add('hidden');
-                document.getElementById('game-title-badge').textContent = `✏️ ${name}`;
+                document.getElementById('top-hud-title').textContent = 'Sopa Propia';
+                document.getElementById('game-theme-banner').textContent = name;
                 this.resetGameRound();
                 this.nav('game');
             };
@@ -856,103 +810,120 @@
             document.querySelectorAll('.app-screen').forEach(s => s.classList.add('hidden'));
             const target = document.getElementById('screen-' + view);
             if (target) target.classList.remove('hidden');
+
+            const isGame = view === 'game';
+            const dock = document.getElementById('bottom-nav-dock');
+            const topBack = document.getElementById('btn-top-back');
+            const topLevelInfo = document.getElementById('top-hud-level-info');
+
+            if (isGame) {
+                dock.classList.add('hidden');
+                topBack.classList.remove('hidden');
+                topLevelInfo.classList.remove('hidden');
+            } else {
+                dock.classList.remove('hidden');
+                if (view === 'menu') topBack.classList.add('hidden');
+                else topBack.classList.remove('hidden');
+                topLevelInfo.classList.add('hidden');
+            }
+
+            // Actualizar estado activo de la barra inferior
+            document.querySelectorAll('.bottom-nav-item').forEach(item => {
+                if (item.dataset.nav === view) item.classList.add('active');
+                else item.classList.remove('active');
+            });
         }
 
-        renderProfile() {
+        renderHubInfo() {
             const p = Storage.getProfile();
+            const prog = Storage.getAdventureProgress();
+            const unlocked = Storage.getUnlockedCards();
+
+            // Header
             document.getElementById('header-avatar').textContent = p.avatar;
-            document.getElementById('header-name').textContent = p.name;
-            document.getElementById('header-score').textContent = (p.totalScore || 0).toLocaleString() + ' pts';
-            document.getElementById('header-rank').textContent = p.rank || 'Novato';
+            document.getElementById('header-score').textContent = (p.totalScore || 0).toLocaleString();
+
+            // Hub Central Card
+            document.getElementById('hub-avatar').textContent = p.avatar;
+            document.getElementById('hub-player-name').textContent = p.name.toUpperCase();
+            document.getElementById('hub-rank-badge').textContent = `Rango: ${p.rank || 'Novato'}`;
+
+            const pct = Math.round((prog.maxLevel / ADVENTURE_LEVELS.length) * 100);
+            document.getElementById('hub-world-bar').style.width = `${pct}%`;
+            document.getElementById('hub-world-progress-text').textContent = `${prog.maxLevel} / ${ADVENTURE_LEVELS.length}`;
+
+            document.getElementById('hub-cards-count').textContent = `${unlocked.length}/${ADVENTURE_LEVELS.length} Cartas Rescatadas`;
+            document.getElementById('hub-streak-badge').textContent = `Nivel ${prog.maxLevel}`;
+            document.getElementById('btn-play-level-text').textContent = `Jugar nivel ${prog.maxLevel}`;
         }
 
         // ==========================================
-        // MODO CLÁSICO: CATEGORÍAS CON PALABRAS AL AZAR
+        // MODO CLÁSICO (AL AZAR)
         // ==========================================
         renderClassicCategories() {
-            const container = document.getElementById('classic-categories-grid');
-            container.innerHTML = '';
+            const grid = document.getElementById('classic-categories-grid');
+            grid.innerHTML = '';
 
             Object.values(CLASSIC_CATEGORIES).forEach(cat => {
                 const el = document.createElement('div');
-                el.className = 'cat-card group';
+                el.className = 'casual-card p-3.5 cursor-pointer flex flex-col items-center text-center transition active:scale-95';
                 el.innerHTML = `
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-4xl group-hover:scale-110 transition duration-200">${cat.icon}</span>
-                        <span class="cat-pill">🎲 Al Azar</span>
-                    </div>
-                    <h3 class="font-bold text-lg text-white mb-1">${cat.name}</h3>
-                    <p class="text-xs text-slate-400 mb-3 line-clamp-2">${cat.description}</p>
-                    <div class="flex items-center justify-between text-xs text-indigo-400 font-semibold pt-2 border-t border-slate-700/60">
-                        <span>Banco de ${cat.words.length} palabras</span>
-                        <span class="text-cyan-400 font-bold">Jugar Partida →</span>
-                    </div>
+                    <span class="text-4xl mb-1.5">${cat.icon}</span>
+                    <h3 class="font-extrabold text-sm text-slate-800">${cat.name}</h3>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-1">🎲 Al Azar</span>
                 `;
                 el.onclick = () => this.startClassicGame(cat);
-                container.appendChild(el);
+                grid.appendChild(el);
             });
         }
 
         startClassicGame(category) {
             this.mode = 'classic';
             this.classicCategory = category;
-
-            // Generar tablero extrayendo palabras AL AZAR del banco de la categoría
             this.puzzle = Generator.createRandom(category.words, this.classicDiff);
             this.hintsLeft = 3;
 
             document.getElementById('game-hud-multi').classList.add('hidden');
-            document.getElementById('game-reaction-bar').classList.add('hidden');
-            document.getElementById('game-title-badge').textContent = `${category.icon} ${category.name} (Aleatoria)`;
+            document.getElementById('top-hud-title').textContent = 'Modo Clásico';
+            document.getElementById('game-theme-banner').textContent = `${category.icon} ${category.name}`;
 
             this.resetGameRound();
             this.nav('game');
         }
 
         // ==========================================
-        // MODO AVENTURA: NIVELES PROGRESIVOS Y CÓDICE
+        // MODO AVENTURA (NIVELES)
         // ==========================================
         renderAdventureMap() {
-            const container = document.getElementById('adventure-levels-list');
-            container.innerHTML = '';
-            const progress = Storage.getAdventureProgress();
+            const list = document.getElementById('adventure-levels-list');
+            list.innerHTML = '';
+            const prog = Storage.getAdventureProgress();
 
-            ADVENTURE_LEVELS.forEach((lvl) => {
-                const isUnlocked = lvl.id <= progress.maxLevel;
-                const stars = progress.levelStars[lvl.id] || 0;
-                const isCompleted = stars > 0;
+            ADVENTURE_LEVELS.forEach(lvl => {
+                const isUnlocked = lvl.id <= prog.maxLevel;
+                const stars = prog.levelStars[lvl.id] || 0;
 
                 const card = document.createElement('div');
-                card.className = `level-card ${isUnlocked ? 'unlocked' : 'locked'} group`;
+                card.className = `level-card-casual ${isUnlocked ? 'unlocked' : 'locked'}`;
                 card.innerHTML = `
-                    <div class="flex items-center space-x-3.5">
-                        <div class="level-badge ${isCompleted ? 'completed' : (isUnlocked ? 'current' : 'locked')}">
-                            ${isCompleted ? '✓' : lvl.id}
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white shadow ${stars > 0 ? 'bg-emerald-500' : (isUnlocked ? 'bg-blue-500' : 'bg-slate-400')}">
+                            ${stars > 0 ? '✓' : lvl.id}
                         </div>
                         <div>
-                            <div class="flex items-center space-x-2">
-                                <h3 class="font-bold text-white text-base">${lvl.title}</h3>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background-color: ${lvl.reward.rarityColor}20; color: ${lvl.reward.rarityColor}">
-                                    ${lvl.reward.rarity}
-                                </span>
-                            </div>
-                            <p class="text-xs text-slate-400">${lvl.biome} • Recompensa: ${lvl.reward.name}</p>
-                            <div class="flex text-amber-400 text-xs mt-1">
-                                ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}
-                            </div>
+                            <div class="font-extrabold text-sm text-slate-800">${lvl.title}</div>
+                            <div class="text-[11px] text-slate-500 font-semibold">${lvl.biome} • ${lvl.reward.name}</div>
+                            <div class="text-amber-400 text-xs">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
                         </div>
                     </div>
                     <div>
                         ${isUnlocked 
-                            ? `<button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs shadow-lg transition">Jugar →</button>`
-                            : `<span class="text-lg text-slate-600">🔒</span>`}
+                            ? `<span class="btn-arcade-green px-3.5 py-1.5 rounded-full text-xs font-bold inline-block">Jugar</span>`
+                            : `<span class="text-lg">🔒</span>`}
                     </div>
                 `;
-
-                if (isUnlocked) {
-                    card.onclick = () => this.startAdventureLevel(lvl);
-                }
-                container.appendChild(card);
+                if (isUnlocked) card.onclick = () => this.startAdventureLevel(lvl);
+                list.appendChild(card);
             });
         }
 
@@ -963,61 +934,52 @@
             this.hintsLeft = 3;
 
             document.getElementById('game-hud-multi').classList.add('hidden');
-            document.getElementById('game-reaction-bar').classList.add('hidden');
-            document.getElementById('game-title-badge').textContent = `Nivel ${level.id}: ${level.title}`;
+            document.getElementById('top-hud-title').textContent = `Nivel ${level.id}`;
+            document.getElementById('game-theme-banner').textContent = level.title;
 
             this.resetGameRound();
             this.nav('game');
         }
 
         // ==========================================
-        // ÁLBUM DE CROMOS
+        // ÁLBUM DE CARTAS
         // ==========================================
         renderAlbum() {
             const grid = document.getElementById('album-grid');
             grid.innerHTML = '';
-            const unlockedList = Storage.getUnlockedCards();
-
-            document.getElementById('album-count').textContent = `${unlockedList.length}/${ADVENTURE_LEVELS.length} Desbloqueados`;
+            const unlocked = Storage.getUnlockedCards();
+            document.getElementById('album-count').textContent = `${unlocked.length}/${ADVENTURE_LEVELS.length}`;
 
             ADVENTURE_LEVELS.forEach(lvl => {
                 const r = lvl.reward;
-                const isUnlocked = unlockedList.includes(r.id);
+                const isUnlocked = unlocked.includes(r.id);
 
                 const item = document.createElement('div');
-                item.className = `album-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+                item.className = `album-card-casual ${isUnlocked ? 'unlocked' : 'locked'}`;
                 item.innerHTML = `
                     <div class="album-card-img-wrap">
-                        <img src="${r.image}" alt="${r.name}" class="album-card-img ${isUnlocked ? '' : 'grayscale brightness-25'}">
+                        <img src="${r.image}" alt="${r.name}" class="album-card-img ${isUnlocked ? '' : 'grayscale brightness-50'}">
                         ${!isUnlocked ? '<div class="album-lock-overlay">🔒</div>' : ''}
                     </div>
-                    <div class="p-3">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full" style="background:${r.rarityColor}20; color:${r.rarityColor}">
-                                ${r.rarity}
-                            </span>
-                            <span class="text-[10px] text-slate-400 font-mono">#0${lvl.id}</span>
-                        </div>
-                        <h4 class="font-bold text-sm text-white truncate">${isUnlocked ? r.name : '??? Bloqueado'}</h4>
-                        <p class="text-[11px] text-slate-400 italic line-clamp-1">${isUnlocked ? r.scientific : 'Nivel ' + lvl.id}</p>
+                    <div class="p-2.5">
+                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full" style="background:${r.rarityColor}20; color:${r.rarityColor}">
+                            ${r.rarity}
+                        </span>
+                        <h4 class="font-extrabold text-xs text-slate-800 truncate mt-1">${isUnlocked ? r.name : '??? Bloqueado'}</h4>
                     </div>
                 `;
-
-                if (isUnlocked) {
-                    item.onclick = () => this.showCardDetailModal(r);
-                }
+                if (isUnlocked) item.onclick = () => this.showCardDetailModal(r);
                 grid.appendChild(item);
             });
         }
 
         showCardDetailModal(reward) {
-            document.getElementById('reward-modal-title').textContent = 'Ficha del Museo';
+            document.getElementById('reward-modal-title').textContent = '📖 Ficha del Museo';
             document.getElementById('reward-card-img').src = reward.image;
             document.getElementById('reward-card-name').textContent = reward.name;
             document.getElementById('reward-card-scientific').textContent = reward.scientific;
             document.getElementById('reward-card-desc').textContent = reward.context;
             document.getElementById('reward-card-rarity').textContent = reward.rarity;
-            document.getElementById('reward-card-rarity').style.backgroundColor = `${reward.rarityColor}20`;
             document.getElementById('reward-card-rarity').style.color = reward.rarityColor;
             document.getElementById('reward-stars-container').classList.add('hidden');
             document.getElementById('btn-next-level').classList.add('hidden');
@@ -1025,7 +987,7 @@
         }
 
         // ==========================================
-        // CLASIFICACIÓN (RANKING)
+        // RANKING GLOBAL
         // ==========================================
         renderLeaderboard() {
             const list = Storage.getLeaderboard();
@@ -1034,45 +996,53 @@
 
             list.forEach(item => {
                 const el = document.createElement('div');
-                el.className = `flex items-center justify-between p-3.5 rounded-2xl mb-2.5 transition ${item.isUser ? 'bg-indigo-950/80 border-2 border-indigo-500 shadow-lg shadow-indigo-500/20' : 'bg-slate-800/80 border border-slate-700/60'}`;
+                el.className = `casual-card p-3 flex items-center justify-between ${item.isUser ? 'border-2 border-emerald-500 bg-emerald-50' : ''}`;
                 const medal = item.rank === 1 ? '🥇' : item.rank === 2 ? '🥈' : item.rank === 3 ? '🥉' : `#${item.rank}`;
 
                 el.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <span class="text-base font-black w-8 text-center">${medal}</span>
+                        <span class="text-sm font-black w-7 text-center text-slate-700">${medal}</span>
                         <span class="text-2xl">${item.avatar}</span>
                         <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="font-bold text-sm text-white">${item.name}</span>
-                                <span class="text-xs">${item.country}</span>
-                            </div>
-                            <span class="text-[10px] font-semibold text-slate-400">${item.badge}</span>
+                            <div class="font-extrabold text-xs text-slate-800">${item.name} ${item.country}</div>
+                            <div class="text-[10px] font-bold text-slate-500">${item.badge}</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-amber-400 font-extrabold text-sm font-mono">${item.points.toLocaleString()} pts</div>
-                    </div>
+                    <div class="text-amber-600 font-black text-xs font-mono">${item.points.toLocaleString()} 🪙</div>
                 `;
                 container.appendChild(el);
             });
         }
 
         // ==========================================
-        // TABLERO Y JUEGO
+        // TABLERO BLANCO + CÁPSULAS SVG CONTINUAS
         // ==========================================
         resetGameRound() {
             this.found.clear();
-            this.updateHintBadge();
+            this.colorIndex = 0;
+            document.getElementById('hint-count-badge').textContent = this.hintsLeft;
             this.renderBoard();
             this.renderWordChips();
-            this.updateProgress();
             this.startTimer();
         }
 
         renderBoard() {
             const gridEl = document.getElementById('puzzle-board');
+            const svgEl = document.getElementById('board-svg-overlay');
             gridEl.innerHTML = '';
+            svgEl.innerHTML = '';
+
             const size = this.puzzle.size;
+            svgEl.setAttribute('viewBox', `0 0 ${size * 100} ${size * 100}`);
+
+            // Línea de arrastre en vivo (inicialmente oculta)
+            const dragLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            dragLine.setAttribute('id', 'active-drag-line');
+            dragLine.setAttribute('stroke', 'rgba(59, 130, 246, 0.72)');
+            dragLine.setAttribute('stroke-width', '74');
+            dragLine.setAttribute('stroke-linecap', 'round');
+            dragLine.setAttribute('visibility', 'hidden');
+            svgEl.appendChild(dragLine);
 
             gridEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
             gridEl.style.gridTemplateRows = `repeat(${size}, 1fr)`;
@@ -1094,27 +1064,15 @@
             container.innerHTML = '';
             this.puzzle.wordsToFind.forEach(w => {
                 const chip = document.createElement('div');
-                chip.className = 'word-chip';
+                chip.className = 'word-chip-casual';
                 chip.id = 'chip-' + w;
                 chip.textContent = w;
                 container.appendChild(chip);
             });
         }
 
-        updateProgress() {
-            const total = this.puzzle.wordsToFind.length;
-            const current = this.found.size;
-            document.getElementById('hud-count-display').textContent = `${current}/${total}`;
-            const pct = Math.round((current / total) * 100);
-            document.getElementById('hud-progress-bar').style.width = pct + '%';
-        }
-
-        updateHintBadge() {
-            document.getElementById('hint-count-badge').textContent = this.hintsLeft;
-        }
-
         useHint() {
-            if (this.hintsLeft <= 0) { alert('No te quedan pistas en este nivel.'); return; }
+            if (this.hintsLeft <= 0) { alert('No te quedan pistas en esta partida.'); return; }
             const missing = this.puzzle.placedWords.filter(p => !this.found.has(p.word));
             if (missing.length === 0) return;
 
@@ -1123,9 +1081,9 @@
             if (tile) {
                 sound.playHint();
                 this.hintsLeft--;
-                this.updateHintBadge();
+                document.getElementById('hint-count-badge').textContent = this.hintsLeft;
                 tile.classList.add('tile-hint-flash');
-                setTimeout(() => tile.classList.remove('tile-hint-flash'), 2500);
+                setTimeout(() => tile.classList.remove('tile-hint-flash'), 3000);
             }
         }
 
@@ -1146,7 +1104,7 @@
                 this.isDragging = true;
                 this.startCell = t;
                 this.selectedCells = [t];
-                this.paintSelection();
+                this.paintLiveDragLine(t, t);
                 sound.playSelect();
             };
 
@@ -1155,20 +1113,26 @@
                 const cur = getTile(x, y);
                 if (!cur) return;
 
+                if (cur.r === this.startCell.r && cur.c === this.startCell.c) {
+                    this.selectedCells = [this.startCell];
+                    this.paintLiveDragLine(this.startCell, this.startCell);
+                    return;
+                }
+
                 const line = Generator.getLineCells(this.startCell.r, this.startCell.c, cur.r, cur.c);
                 if (line) {
                     const prevCount = this.selectedCells.length;
                     this.selectedCells = line;
                     if (line.length !== prevCount) sound.playSelect();
-                    this.paintSelection();
+                    this.paintLiveDragLine(this.startCell, cur);
                 }
             };
 
             const onEnd = () => {
                 if (!this.isDragging) return;
                 this.isDragging = false;
+                this.hideLiveDragLine();
                 this.checkSelectedWord();
-                this.clearSelection();
                 this.startCell = null;
                 this.selectedCells = [];
             };
@@ -1178,17 +1142,33 @@
             window.addEventListener('mouseup', () => { if (this.isDragging) onEnd(); });
 
             board.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) onStart(e.touches[0].clientX, e.touches[0].clientY);
+                if (e.touches.length === 1) {
+                    e.preventDefault();
+                    onStart(e.touches[0].clientX, e.touches[0].clientY);
+                }
             }, { passive: false });
 
             window.addEventListener('touchmove', (e) => {
-                if (this.isDragging && e.touches.length === 1) onMove(e.touches[0].clientX, e.touches[0].clientY);
+                if (this.isDragging && e.touches.length === 1) {
+                    e.preventDefault();
+                    onMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
             }, { passive: false });
 
             window.addEventListener('touchend', () => { if (this.isDragging) onEnd(); });
         }
 
-        paintSelection() {
+        paintLiveDragLine(cellA, cellB) {
+            const dragLine = document.getElementById('active-drag-line');
+            if (!dragLine) return;
+
+            dragLine.setAttribute('x1', cellA.c * 100 + 50);
+            dragLine.setAttribute('y1', cellA.r * 100 + 50);
+            dragLine.setAttribute('x2', cellB.c * 100 + 50);
+            dragLine.setAttribute('y2', cellB.r * 100 + 50);
+            dragLine.setAttribute('visibility', 'visible');
+
+            // Resaltar texto blanco sobre línea azul
             document.querySelectorAll('.board-tile.is-selecting').forEach(t => t.classList.remove('is-selecting'));
             this.selectedCells.forEach(c => {
                 const el = document.querySelector(`.board-tile[data-r="${c.r}"][data-c="${c.c}"]`);
@@ -1196,8 +1176,31 @@
             });
         }
 
-        clearSelection() {
+        hideLiveDragLine() {
+            const dragLine = document.getElementById('active-drag-line');
+            if (dragLine) dragLine.setAttribute('visibility', 'hidden');
             document.querySelectorAll('.board-tile.is-selecting').forEach(t => t.classList.remove('is-selecting'));
+        }
+
+        drawPermanentCapsule(cells, colorHex) {
+            const svgEl = document.getElementById('board-svg-overlay');
+            const dragLine = document.getElementById('active-drag-line');
+            if (!svgEl || !cells || cells.length === 0) return;
+
+            const start = cells[0];
+            const end = cells[cells.length - 1];
+
+            const pill = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            pill.setAttribute('x1', start.c * 100 + 50);
+            pill.setAttribute('y1', start.r * 100 + 50);
+            pill.setAttribute('x2', end.c * 100 + 50);
+            pill.setAttribute('y2', end.r * 100 + 50);
+            pill.setAttribute('stroke', colorHex);
+            pill.setAttribute('stroke-width', '74');
+            pill.setAttribute('stroke-linecap', 'round');
+
+            // Insertar debajo de la línea de arrastre activa
+            svgEl.insertBefore(pill, dragLine);
         }
 
         checkSelectedWord() {
@@ -1224,27 +1227,16 @@
         claim(word, cells, who) {
             this.found.set(word, { who, cells });
 
-            cells.forEach(c => {
-                const el = document.querySelector(`.board-tile[data-r="${c.r}"][data-c="${c.c}"]`);
-                if (el) {
-                    if (who === 'me') {
-                        if (el.classList.contains('found-by-rival')) {
-                            el.classList.remove('found-by-rival');
-                            el.classList.add('found-by-both');
-                        } else el.classList.add('found-by-me');
-                    } else {
-                        if (el.classList.contains('found-by-me')) {
-                            el.classList.remove('found-by-me');
-                            el.classList.add('found-by-both');
-                        } else el.classList.add('found-by-rival');
-                    }
-                }
-            });
+            // Dibujar cápsula pastel continua
+            const color = who === 'me'
+                ? PASTEL_CAPSULE_COLORS[this.colorIndex % PASTEL_CAPSULE_COLORS.length]
+                : '#fbbf24';
+            this.colorIndex++;
+            this.drawPermanentCapsule(cells, color);
 
             const chip = document.getElementById('chip-' + word);
-            if (chip) chip.classList.add(who === 'me' ? 'chip-found-me' : 'chip-found-rival');
+            if (chip) chip.classList.add(who === 'me' ? 'found-me' : 'found-rival');
 
-            this.updateProgress();
             if (this.mode === 'multi') this.updateMultiScore();
         }
 
@@ -1254,7 +1246,6 @@
                 if (window.confetti) window.confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
 
                 if (this.mode === 'adventure' && this.currentLevel) {
-                    // Modo Aventura: desbloqueo de carta, estrellas y puntos
                     const timeBonus = Math.max(0, 300 - (this.seconds * 3));
                     const hintBonus = this.hintsLeft * 50;
                     const stars = this.seconds <= 45 ? 3 : (this.seconds <= 90 ? 2 : 1);
@@ -1263,42 +1254,43 @@
                     Storage.unlockCard(this.currentLevel.reward.id);
                     Storage.saveAdventureProgress(this.currentLevel.id, stars);
                     Storage.addScore(totalGained);
-                    this.renderProfile();
+                    this.renderHubInfo();
 
                     sound.playCardUnlock();
                     this.showLevelRewardModal(this.currentLevel.reward, stars, totalGained);
                 } else if (this.mode === 'classic') {
-                    // Modo Clásico: puntos por completar partida aleatoria
                     sound.playWordSuccess();
                     const earned = this.classicDiff === 'dificil' ? 450 : (this.classicDiff === 'medio' ? 300 : 200);
                     Storage.addScore(earned);
-                    this.renderProfile();
-                    alert(`¡Partida completada con éxito en ${this.fmtTime(this.seconds)}!\nGanaste +${earned} puntos para tu ranking global.`);
-                    this.renderClassicCategories();
-                    this.nav('categories');
+                    this.renderHubInfo();
+                    setTimeout(() => {
+                        alert(`🎉 ¡Sopa completada en ${this.fmtTime(this.seconds)}!\n+${earned} monedas para tu Ranking.`);
+                        this.startClassicGame(this.classicCategory);
+                    }, 400);
                 } else if (this.mode === 'multi') {
                     sound.playWordSuccess();
                     let my = 0, riv = 0;
                     this.found.forEach(v => { if (v.who === 'me') my++; else riv++; });
                     const won = my > riv;
                     if (won) Storage.addScore(500);
-                    this.renderProfile();
-                    alert(won ? `👑 ¡Victoria! Ganaste ${my} a ${riv} (+500 pts)` : `¡Buen intento! Resultado: ${my} a ${riv}`);
-                    this.nav('menu');
+                    this.renderHubInfo();
+                    setTimeout(() => {
+                        alert(won ? `👑 ¡Victoria! Ganaste ${my} a ${riv} (+500 pts)` : `¡Buen intento! Resultado: ${my} a ${riv}`);
+                        this.nav('menu');
+                    }, 400);
                 }
             }
         }
 
         showLevelRewardModal(reward, stars, points) {
-            document.getElementById('reward-modal-title').textContent = '🎉 ¡CARTA DESBLOQUEADA!';
+            document.getElementById('reward-modal-title').textContent = '🎉 ¡NIVEL SUPERADO!';
             document.getElementById('reward-card-img').src = reward.image;
             document.getElementById('reward-card-name').textContent = reward.name;
             document.getElementById('reward-card-scientific').textContent = reward.scientific;
             document.getElementById('reward-card-desc').textContent = reward.context;
             document.getElementById('reward-card-rarity').textContent = reward.rarity;
-            document.getElementById('reward-card-rarity').style.backgroundColor = `${reward.rarityColor}20`;
             document.getElementById('reward-card-rarity').style.color = reward.rarityColor;
-            document.getElementById('reward-points-badge').textContent = `+${points.toLocaleString()} PTS`;
+            document.getElementById('reward-points-badge').textContent = `+${points.toLocaleString()} 🪙`;
 
             const starWrap = document.getElementById('reward-stars-container');
             starWrap.classList.remove('hidden');
@@ -1313,10 +1305,11 @@
             this.puzzle = data.puzzle;
             this.hintsLeft = 1;
             document.getElementById('game-hud-multi').classList.remove('hidden');
-            document.getElementById('game-reaction-bar').classList.remove('hidden');
-            document.getElementById('game-title-badge').textContent = '⚔️ Duelo 1 vs 1 en Tiempo Real';
+            document.getElementById('top-hud-title').textContent = 'Duelo 1 vs 1';
+            document.getElementById('game-theme-banner').textContent = '⚔️ EN VIVO';
+
             const p = Storage.getProfile();
-            document.getElementById('hud-player-name').textContent = `Tú (${p.name})`;
+            document.getElementById('hud-player-name').textContent = p.name;
             document.getElementById('hud-rival-name').textContent = this.multiplayer.isHost ? 'Rival' : 'Anfitrión';
             this.updateMultiScore();
             this.resetGameRound();
