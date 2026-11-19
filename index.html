@@ -800,6 +800,25 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL: AVISO PROFESIONAL DEL JUEGO ==================== -->
+    <div id="modal-notice" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="casual-card w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl text-center">
+            <div id="notice-modal-header" class="word-bank-header py-3 px-4 flex items-center justify-between">
+                <span id="notice-modal-title" class="truncate">PalabraMania</span>
+                <button id="btn-close-notice-x" type="button" class="text-white/90 hover:text-white font-black text-base leading-none px-1">✕</button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div id="notice-modal-icon" class="w-16 h-16 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-4xl shadow-inner">
+                    ✨
+                </div>
+                <p id="notice-modal-message" class="text-sm font-bold text-slate-700 leading-relaxed whitespace-pre-line"></p>
+                <button id="btn-close-notice-ok" type="button" class="btn-arcade-green w-full py-3 rounded-full font-game text-base font-bold">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- CARGA DIRECTA DE SCRIPT COMPATIBLE CON FILE:/// Y WEB -->
     <script src="js/bundle.js"></script>
 

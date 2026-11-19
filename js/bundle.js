@@ -262,6 +262,7 @@
             this.musicBus = null;
             this.stepIndex = 0;
             this.isPlayingMusic = false;
+            this._pausedByBackground = false;
         }
 
         init() {
@@ -272,7 +273,13 @@
                     this.setupMusicBus();
                 }
             }
-            if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            if (this.ctx && this.ctx.state === 'suspended' && !document.hidden) {
+                this.ctx.resume().then(() => {
+                    if (this.isPlayingMusic && !this._pausedByBackground && this.musicGenre !== 'off') {
+                        this.playMusicStep();
+                    }
+                }).catch(() => {});
+            }
         }
 
         setupMusicBus() {
@@ -313,20 +320,46 @@
         }
 
         startMusic() {
-            if (this.musicGenre === 'off') return;
+            if (this.musicGenre === 'off' || document.hidden) return;
+            this._pausedByBackground = false;
             this.init();
             if (!this.ctx || this.isPlayingMusic) return;
 
             this.isPlayingMusic = true;
             this.stepIndex = 0;
             const intervals = { piano: 750, relax: 2200, lofi: 620, aventura: 480 };
-            this.playMusicStep();
+            if (this.ctx.state === 'running') this.playMusicStep();
             this.musicLoop = setInterval(() => this.playMusicStep(), intervals[this.musicGenre] || 800);
         }
 
         stopMusic() {
             this.isPlayingMusic = false;
             if (this.musicLoop) { clearInterval(this.musicLoop); this.musicLoop = null; }
+        }
+
+        pauseForBackground() {
+            if (this.isPlayingMusic) {
+                this._pausedByBackground = true;
+            }
+            this.stopMusic();
+            if (this.ctx && this.ctx.state === 'running') {
+                this.ctx.suspend().catch(() => {});
+            }
+        }
+
+        resumeFromBackground() {
+            if (document.hidden) return;
+            const shouldResume = this._pausedByBackground || (this.musicGenre !== 'off' && !this.isPlayingMusic);
+            this._pausedByBackground = false;
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume().then(() => {
+                    if (shouldResume && this.musicGenre !== 'off' && !this.isPlayingMusic && !document.hidden) {
+                        this.startMusic();
+                    }
+                }).catch(() => {});
+            } else if (shouldResume && this.musicGenre !== 'off' && !this.isPlayingMusic) {
+                this.startMusic();
+            }
         }
 
         playTone(freq, duration, type = 'sine', vol = 0.2, attack = 0.04) {
@@ -1115,7 +1148,7 @@
                 onEmoji: () => {},
                 onLeave: () => this.handleRivalLeft(),
                 onError: (m) => {
-                    alert(m);
+                    this.showNotice({ icon: '⚠️', title: 'Aviso de Sala', message: m });
                     this.resetLobbyPanels();
                 }
             });
@@ -1134,6 +1167,27 @@
                     this.resizeBoard();
                 }
             });
+        }
+
+        showNotice(opts) {
+            const cfg = typeof opts === 'string' ? { message: opts } : (opts || {});
+            const modal = document.getElementById('modal-notice');
+            if (!modal) return;
+            document.getElementById('notice-modal-title').textContent = cfg.title || 'PalabraMania';
+            document.getElementById('notice-modal-icon').textContent = cfg.icon || '✨';
+            document.getElementById('notice-modal-message').textContent = cfg.message || '';
+            const okBtn = document.getElementById('btn-close-notice-ok');
+            const xBtn = document.getElementById('btn-close-notice-x');
+            okBtn.textContent = cfg.buttonText || 'Entendido';
+
+            const close = () => {
+                modal.classList.add('hidden');
+                if (typeof cfg.onClose === 'function') cfg.onClose();
+            };
+            okBtn.onclick = close;
+            xBtn.onclick = close;
+            modal.onclick = (e) => { if (e.target === modal) close(); };
+            modal.classList.remove('hidden');
         }
 
         applyTheme(themeKey) {
@@ -1249,11 +1303,35 @@
             });
             document.getElementById('btn-toggle-sfx').onclick = () => { sound.toggleSfx(); updateSettingsUI(); };
 
-            const unlockAudioOnce = () => {
-                if (sound.musicGenre !== 'off' && !sound.isPlayingMusic) sound.startMusic();
-                window.removeEventListener('pointerdown', unlockAudioOnce);
+            if (sound.musicGenre !== 'off' && !document.hidden) {
+                sound.startMusic();
+            }
+
+            const unlockEvents = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
+            const unlockAudio = () => {
+                if (document.hidden) return;
+                sound.init();
+                if (sound.musicGenre !== 'off' && !sound.isPlayingMusic) {
+                    sound.startMusic();
+                }
+                if (sound.ctx && sound.ctx.state === 'running') {
+                    unlockEvents.forEach(ev => window.removeEventListener(ev, unlockAudio, true));
+                }
             };
-            window.addEventListener('pointerdown', unlockAudioOnce);
+            unlockEvents.forEach(ev => window.addEventListener(ev, unlockAudio, { capture: true, passive: true }));
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) sound.pauseForBackground();
+                else sound.resumeFromBackground();
+            });
+            window.addEventListener('pagehide', () => sound.pauseForBackground());
+            window.addEventListener('blur', () => sound.pauseForBackground());
+            window.addEventListener('pageshow', () => {
+                if (!document.hidden) sound.resumeFromBackground();
+            });
+            window.addEventListener('focus', () => {
+                if (!document.hidden) sound.resumeFromBackground();
+            });
 
             // Regalo Diario
             document.getElementById('btn-close-gift-modal').onclick = () => document.getElementById('modal-daily-gift').classList.add('hidden');
@@ -1299,7 +1377,11 @@
             };
             document.getElementById('btn-copy-link').onclick = () => {
                 const url = window.location.origin + window.location.pathname + '?sala=' + this.multiplayer.code;
-                navigator.clipboard.writeText(url).then(() => alert('¡Enlace de invitación copiado!'));
+                navigator.clipboard.writeText(url).then(() => this.showNotice({
+                    icon: '🔗',
+                    title: '¡Enlace Copiado!',
+                    message: 'El enlace de invitación se copió al portapapeles. Compártelo con tu amigo.'
+                }));
             };
             document.getElementById('btn-launch-match').onclick = () => {
                 this.multiplayer.startMatch(makeRandomMultiPuzzle());
@@ -1409,7 +1491,14 @@
                 const name = document.getElementById('custom-title').value.trim();
                 const raw = document.getElementById('custom-words').value.split(/[,\n]/);
                 const words = raw.map(w => sanitizeWord(w)).filter(w => w.length >= 3 && w.length <= 12);
-                if (words.length < 4) { alert('Introduce al menos 4 palabras válidas.'); return; }
+                if (words.length < 4) {
+                    this.showNotice({
+                        icon: '📝',
+                        title: 'Faltan Palabras',
+                        message: 'Introduce al menos 4 palabras válidas (mínimo 3 letras cada una).'
+                    });
+                    return;
+                }
 
                 this.mode = 'classic';
                 this.puzzle = Generator.createFixed(words, 'medio');
@@ -1597,7 +1686,12 @@
             const daily = Storage.getDailyState();
             const today = getTodayDateKey();
             if (daily.lastGiftDate === today) {
-                alert('Ya abriste tu regalo de hoy. ¡Vuelve mañana!');
+                this.showNotice({
+                    icon: '🎁',
+                    title: 'Regalo Diario',
+                    message: 'Ya abriste tu regalo de hoy.\n¡Vuelve mañana para reclamar otro cofre!',
+                    buttonText: '¡Entendido!'
+                });
                 return;
             }
             document.getElementById('gift-streak-text').textContent = `Racha: ${daily.streak || 0} días`;
@@ -1662,8 +1756,13 @@
                     const coins = Math.max(50, Math.floor(this.blitzScore / 2));
                     Storage.addScoreAndCoins(this.blitzScore, coins);
                     this.renderHubInfo();
-                    alert(`⚡ ¡TIEMPO AGOTADO!\nPuntuación Blitz: ${this.blitzScore} pts\nGanaste +${coins} 🪙`);
-                    this.nav('menu');
+                    this.showNotice({
+                        icon: '⚡',
+                        title: '¡Tiempo Agotado!',
+                        message: `Puntuación Blitz: ${this.blitzScore} pts\nGanaste +${coins} 🪙`,
+                        buttonText: 'Volver al Menú',
+                        onClose: () => this.nav('menu')
+                    });
                 }
             }, 1000);
         }
@@ -1923,7 +2022,11 @@
                 Storage.saveProfile(p);
             } else {
                 if (!Storage.spendCoins(100)) {
-                    alert('Necesitas 100 monedas 🪙 para usar una pista.');
+                    this.showNotice({
+                        icon: '💡',
+                        title: 'Monedas Insuficientes',
+                        message: 'Necesitas 100 monedas 🪙 para usar una pista.'
+                    });
                     return;
                 }
             }
@@ -1942,7 +2045,11 @@
             const missing = this.puzzle.placedWords.filter(p => !this.found.has(p.word));
             if (missing.length === 0) return;
             if (!Storage.spendCoins(200)) {
-                alert('Necesitas 200 monedas 🪙 para usar el Rayo Revelador ⚡.');
+                this.showNotice({
+                    icon: '⚡',
+                    title: 'Monedas Insuficientes',
+                    message: 'Necesitas 200 monedas 🪙 para usar el Rayo Revelador.'
+                });
                 return;
             }
             this.renderHubInfo();
@@ -2100,24 +2207,56 @@
                         daily.streak = (daily.streak || 0) + 1;
                         Storage.saveDailyState(daily);
                         Storage.addScoreAndCoins(600, 500);
-                        alert('🎉 ¡DESAFÍO DIARIO COMPLETADO!\nGanaste +500 Monedas 🪙 y aumentaste tu Racha Diaria 🔥.');
+                        this.renderHubInfo();
+                        this.showNotice({
+                            icon: '🎉',
+                            title: '¡Desafío Completado!',
+                            message: 'Ganaste +500 Monedas 🪙\ny aumentaste tu Racha Diaria 🔥.',
+                            buttonText: '¡Genial!',
+                            onClose: () => {
+                                this.renderDailyScreen();
+                                this.nav('daily');
+                            }
+                        });
                     } else {
-                        alert('¡Desafío repasado con éxito!');
+                        this.renderHubInfo();
+                        this.showNotice({
+                            icon: '✅',
+                            title: '¡Desafío Repasado!',
+                            message: 'Completaste el desafío de hoy nuevamente con éxito.',
+                            onClose: () => {
+                                this.renderDailyScreen();
+                                this.nav('daily');
+                            }
+                        });
                     }
-                    this.renderHubInfo();
-                    this.renderDailyScreen();
-                    this.nav('daily');
                 } else if (this.mode === 'mystery') {
                     sound.playCardUnlock();
                     Storage.addScoreAndCoins(600, 300);
                     this.renderHubInfo();
-                    setTimeout(() => { alert(`🙈 ¡MISTERIO RESUELTO en ${this.fmtTime(this.seconds)}!\n+600 pts y +300 🪙`); this.startMysteryMode(); }, 350);
+                    setTimeout(() => {
+                        this.showNotice({
+                            icon: '🙈',
+                            title: '¡Misterio Resuelto!',
+                            message: `Completado en ${this.fmtTime(this.seconds)}\n+600 pts y +300 🪙`,
+                            buttonText: 'Siguiente Misterio',
+                            onClose: () => this.startMysteryMode()
+                        });
+                    }, 350);
                 } else if (this.mode === 'classic') {
                     sound.playWordSuccess();
                     const coins = this.classicDiff === 'dificil' ? 180 : (this.classicDiff === 'medio' ? 120 : 80);
                     Storage.addScoreAndCoins(coins * 2, coins);
                     this.renderHubInfo();
-                    setTimeout(() => { alert(`🎲 ¡Sopa completada en ${this.fmtTime(this.seconds)}!\n+${coins} 🪙`); this.startClassicGame(this.classicCategory); }, 350);
+                    setTimeout(() => {
+                        this.showNotice({
+                            icon: '🎲',
+                            title: '¡Sopa Completada!',
+                            message: `Tiempo: ${this.fmtTime(this.seconds)}\nGanaste +${coins} 🪙`,
+                            buttonText: 'Jugar Otra',
+                            onClose: () => this.startClassicGame(this.classicCategory)
+                        });
+                    }, 350);
                 } else if (this.mode === 'multi') {
                     this.stopBot();
                     sound.playWordSuccess();
@@ -2127,8 +2266,20 @@
                     if (won) Storage.addScoreAndCoins(500, 250);
                     this.renderHubInfo();
                     setTimeout(() => {
-                        alert(won ? `👑 ¡Victoria ${my}-${riv}! +250 🪙` : (my === riv ? `🤝 ¡Empate ${my}-${riv}!` : `🥈 Ganó ${this.isBotMatch ? this.botName : 'tu rival'} (${riv}-${my})`));
-                        this.exitMultiplayerToMenu();
+                        const title = won ? '¡Victoria!' : (my === riv ? '¡Empate!' : 'Fin de Partida');
+                        const icon = won ? '👑' : (my === riv ? '🤝' : '🥈');
+                        const message = won
+                            ? `Ganaste ${my} - ${riv}\n+250 Monedas 🪙`
+                            : (my === riv
+                                ? `Empataron ${my} - ${riv}`
+                                : `Ganó ${this.isBotMatch ? this.botName : 'tu rival'} (${riv} - ${my})`);
+                        this.showNotice({
+                            icon,
+                            title,
+                            message,
+                            buttonText: 'Continuar',
+                            onClose: () => this.exitMultiplayerToMenu()
+                        });
                     }, 350);
                 }
             }
