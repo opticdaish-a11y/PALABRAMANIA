@@ -839,231 +839,187 @@
     }
 
     // ==========================================
-    // 5. MULTIJUGADOR P2P (PÚBLICO SIN CLAVE + PRIVADO CON CLAVE)
+    // 5. MULTIJUGADOR EN TIEMPO REAL (MQTT OVER WSS - SIN BLOQUEOS NAT/4G)
     // ==========================================
-    const PUBLIC_SLOTS = ['pm-pub-v2-1', 'pm-pub-v2-2', 'pm-pub-v2-3', 'pm-pub-v2-4', 'pm-pub-v2-5'];
-    const PEER_CONFIG = {
-        debug: 0,
-        config: {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun.cloudflare.com:3478' },
-                {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                }
-            ]
-        }
-    };
+    const MQTT_BROKERS = [
+        'wss://broker.emqx.io:8084/mqtt',
+        'wss://broker.hivemq.com:8884/mqtt'
+    ];
+    const MQTT_LOBBY_TOPIC = 'palabramania/v2/lobby';
+    const MQTT_ROOM_PREFIX = 'palabramania/v2/room/';
 
     class Multiplayer {
         constructor(handlers) {
             this.h = handlers;
-            this.peer = null;
-            this.conn = null;
+            this.client = null;
+            this.myId = 'pm-' + Math.random().toString(36).slice(2, 10) + '-' + Date.now();
+            this.rivalId = null;
             this.isHost = false;
             this.code = null;
+            this.roomTopic = null;
             this.status = 'IDLE'; // IDLE | SCANNING | WAITING | PLAYING
             this.isPublic = false;
             this.rivalProfile = null;
-            this.scanTimeout = null;
+            this.seekTimer = null;
+            this.joinRetryTimer = null;
             this.joinTimeout = null;
             this.botOfferTimer = null;
-            this.rescanTimer = null;
+            this.connectTimeout = null;
+            this.brokerIdx = 0;
+        }
+
+        connectBroker(onConnected, onFail) {
+            if (!window.mqtt) {
+                if (onFail) onFail('Sin conexión para multijugador.');
+                return;
+            }
+            if (this.client) {
+                try { this.client.end(true); } catch (e) {}
+                this.client = null;
+            }
+
+            const tryBroker = (idx) => {
+                if (this.status === 'IDLE') return;
+                if (idx >= MQTT_BROKERS.length) {
+                    if (onFail) onFail('No se pudo conectar al servidor multijugador. Revisa tu internet.');
+                    return;
+                }
+                this.brokerIdx = idx;
+                const url = MQTT_BROKERS[idx];
+                let settled = false;
+
+                const client = window.mqtt.connect(url, {
+                    clientId: this.myId + '-' + Math.floor(Math.random() * 999),
+                    clean: true,
+                    connectTimeout: 5000,
+                    reconnectPeriod: 3000
+                });
+                this.client = client;
+
+                this.connectTimeout = setTimeout(() => {
+                    if (!settled && this.status !== 'IDLE') {
+                        settled = true;
+                        try { client.end(true); } catch (e) {}
+                        tryBroker(idx + 1);
+                    }
+                }, 5500);
+
+                client.on('connect', () => {
+                    if (settled || this.status === 'IDLE') return;
+                    settled = true;
+                    clearTimeout(this.connectTimeout);
+                    if (onConnected) onConnected(client);
+                });
+
+                client.on('error', () => {
+                    if (!settled && this.status !== 'IDLE') {
+                        settled = true;
+                        clearTimeout(this.connectTimeout);
+                        try { client.end(true); } catch (e) {}
+                        tryBroker(idx + 1);
+                    }
+                });
+            };
+
+            tryBroker(0);
         }
 
         /**
-         * Busca jugadores online en salas públicas sin necesidad de clave
+         * Busca jugadores online en el lobby público sin clave
          */
         findPublicMatch(puzzleFactory) {
             this.disconnect();
-            if (!window.Peer) {
-                this.h.onError('Sin conexión para multijugador.');
-                return;
-            }
-
             this.status = 'SCANNING';
             this.isPublic = true;
             this.h.onSearchStart();
 
-            const scanPeerId = `pm-scan-${Date.now()}-${Math.floor(Math.random() * 99999)}`;
-            const scanPeer = new window.Peer(scanPeerId, PEER_CONFIG);
-            this.peer = scanPeer;
-
-            const unavailableSlots = new Set();
-            const probeConns = [];
-            let matched = false;
-
-            scanPeer.on('error', (err) => {
-                if (err && err.type === 'peer-unavailable' && err.message) {
-                    const slot = PUBLIC_SLOTS.find(s => err.message.includes(s));
-                    if (slot) unavailableSlots.add(slot);
-                }
-            });
-
-            scanPeer.on('open', () => {
+            this.connectBroker((client) => {
                 if (this.status !== 'SCANNING') return;
-
-                // Sondear los 5 slots públicos en paralelo
-                PUBLIC_SLOTS.forEach((slotId) => {
-                    try {
-                        const c = scanPeer.connect(slotId, { reliable: true });
-                        probeConns.push(c);
-
-                        c.on('data', (d) => {
-                            if (matched || this.status !== 'SCANNING') {
-                                try { c.close(); } catch (e) {}
-                                return;
-                            }
-                            if (d && d.type === 'SLOT_STATUS') {
-                                if (d.state === 'WAITING') {
-                                    matched = true;
-                                    clearTimeout(this.scanTimeout);
-                                    this.status = 'PLAYING';
-                                    this.isHost = false;
-                                    this.conn = c;
-
-                                    // Cerrar los demás sondeos
-                                    probeConns.forEach(other => {
-                                        if (other !== c) try { other.close(); } catch (e) {}
-                                    });
-
-                                    this.wire();
-                                    c.send({ type: 'CLAIM_PUBLIC', profile: Storage.getProfile() });
-                                } else {
-                                    try { c.close(); } catch (e) {}
-                                }
-                            }
-                        });
-                    } catch (e) {}
-                });
-
-                // Esperar hasta 4.2s para dar tiempo a WebRTC/ICE en redes móviles
-                this.scanTimeout = setTimeout(() => {
-                    if (matched || this.status !== 'SCANNING') return;
-                    probeConns.forEach(c => { try { c.close(); } catch (e) {} });
-                    try { scanPeer.destroy(); } catch (e) {}
-
-                    const freeSlot = PUBLIC_SLOTS.find(s => unavailableSlots.has(s)) || PUBLIC_SLOTS[0];
-                    this.hostPublicSlot(freeSlot, puzzleFactory);
-                }, 4200);
-            });
-        }
-
-        hostPublicSlot(slotId, puzzleFactory) {
-            if (this.status !== 'SCANNING') return;
-            this.isHost = true;
-            this.status = 'WAITING';
-            this.isPublic = true;
-
-            const hostPeer = new window.Peer(slotId, PEER_CONFIG);
-            this.peer = hostPeer;
-
-            hostPeer.on('open', () => {
-                if (this.status !== 'WAITING') return;
+                this.status = 'WAITING';
                 this.h.onSearchWaiting();
+
                 this.botOfferTimer = setTimeout(() => {
                     if (this.status === 'WAITING') this.h.onBotOfferReady();
                 }, 8000);
 
-                // Si estamos en un slot > 0, revisar periódicamente si hay otro jugador esperando en un slot menor
-                const myIdx = PUBLIC_SLOTS.indexOf(slotId);
-                if (myIdx > 0) {
-                    this.rescanTimer = setTimeout(() => {
-                        if (this.status !== 'WAITING') return;
-                        this.tryJoinLowerSlot(myIdx, puzzleFactory);
-                    }, 3500);
-                }
-            });
-
-            hostPeer.on('disconnected', () => {
-                if (this.status === 'WAITING' && !hostPeer.destroyed) {
-                    try { hostPeer.reconnect(); } catch (e) {}
-                }
-            });
-
-            hostPeer.on('connection', (c) => {
-                const sendStatus = () => {
-                    if (this.status !== 'WAITING') {
-                        try { c.send({ type: 'SLOT_STATUS', state: 'BUSY' }); } catch (e) {}
-                        setTimeout(() => { try { c.close(); } catch (e) {} }, 200);
+                client.subscribe(MQTT_LOBBY_TOPIC, { qos: 0 }, (err) => {
+                    if (err) {
+                        this.disconnect();
+                        this.h.onError('Error al entrar al lobby público.');
                         return;
                     }
-                    try { c.send({ type: 'SLOT_STATUS', state: 'WAITING' }); } catch (e) {}
-                };
-                if (c.open) sendStatus();
-                else c.on('open', sendStatus);
 
-                c.on('data', (d) => {
-                    if (d && d.type === 'CLAIM_PUBLIC') {
-                        if (this.status !== 'WAITING') {
-                            try { c.send({ type: 'SLOT_STATUS', state: 'BUSY' }); c.close(); } catch (e) {}
-                            return;
-                        }
-                        clearTimeout(this.botOfferTimer);
-                        clearTimeout(this.rescanTimer);
-                        this.status = 'PLAYING';
-                        this.conn = c;
-                        this.rivalProfile = d.profile;
-                        this.wire();
+                    const sendSeek = () => {
+                        if (this.status !== 'WAITING' || !client.connected) return;
+                        client.publish(MQTT_LOBBY_TOPIC, JSON.stringify({
+                            type: 'SEEK',
+                            from: this.myId,
+                            profile: Storage.getProfile()
+                        }));
+                    };
 
-                        const puzzle = puzzleFactory();
-                        this.startMatch(puzzle);
-                    }
+                    sendSeek();
+                    this.seekTimer = setInterval(sendSeek, 1600);
                 });
-            });
 
-            hostPeer.on('error', (err) => {
-                if (err.type === 'unavailable-id' && this.status === 'WAITING') {
-                    clearTimeout(this.botOfferTimer);
-                    clearTimeout(this.rescanTimer);
-                    const idx = PUBLIC_SLOTS.indexOf(slotId);
-                    const nextSlot = PUBLIC_SLOTS[(idx + 1) % PUBLIC_SLOTS.length];
-                    try { hostPeer.destroy(); } catch (e) {}
-                    this.status = 'SCANNING';
-                    this.hostPublicSlot(nextSlot, puzzleFactory);
-                }
-            });
-        }
+                client.on('message', (topic, payload) => {
+                    let d;
+                    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+                    if (!d || !d.type || d.from === this.myId) return;
 
-        tryJoinLowerSlot(myIdx, puzzleFactory) {
-            if (this.status !== 'WAITING' || !this.peer) return;
-            const lowerSlots = PUBLIC_SLOTS.slice(0, myIdx);
-            lowerSlots.forEach((targetSlot) => {
-                if (this.status !== 'WAITING') return;
-                try {
-                    const c = this.peer.connect(targetSlot, { reliable: true });
-                    c.on('data', (d) => {
-                        if (this.status !== 'WAITING') {
-                            try { c.close(); } catch (e) {}
-                            return;
-                        }
-                        if (d && d.type === 'SLOT_STATUS' && d.state === 'WAITING') {
+                    if (topic === MQTT_LOBBY_TOPIC && this.status === 'WAITING') {
+                        // Emparejamiento determinista: el ID menor inicia la sala para evitar colisiones
+                        if (d.type === 'SEEK' && this.myId < d.from) {
+                            clearInterval(this.seekTimer);
                             clearTimeout(this.botOfferTimer);
-                            clearTimeout(this.rescanTimer);
+                            this.status = 'PLAYING';
+                            this.isHost = true;
+                            this.rivalId = d.from;
+                            this.rivalProfile = d.profile;
+                            this.code = 'PUB-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+                            this.roomTopic = MQTT_ROOM_PREFIX + this.code;
+
+                            const puzzle = puzzleFactory();
+                            const hostProfile = Storage.getProfile();
+
+                            client.unsubscribe(MQTT_LOBBY_TOPIC);
+                            client.subscribe(this.roomTopic, { qos: 1 }, () => {
+                                client.publish(MQTT_LOBBY_TOPIC, JSON.stringify({
+                                    type: 'MATCH_FOUND',
+                                    from: this.myId,
+                                    to: d.from,
+                                    code: this.code,
+                                    puzzle,
+                                    hostProfile
+                                }));
+                                this.h.onStart({ puzzle, hostProfile, guestProfile: this.rivalProfile });
+                            });
+                        } else if (d.type === 'MATCH_FOUND' && d.to === this.myId) {
+                            clearInterval(this.seekTimer);
+                            clearTimeout(this.botOfferTimer);
                             this.status = 'PLAYING';
                             this.isHost = false;
-                            this.conn = c;
-                            this.wire();
-                            c.send({ type: 'CLAIM_PUBLIC', profile: Storage.getProfile() });
-                        } else {
-                            try { c.close(); } catch (e) {}
+                            this.rivalId = d.from;
+                            this.rivalProfile = d.hostProfile;
+                            this.code = d.code;
+                            this.roomTopic = MQTT_ROOM_PREFIX + this.code;
+
+                            client.unsubscribe(MQTT_LOBBY_TOPIC);
+                            client.subscribe(this.roomTopic, { qos: 1 }, () => {
+                                this.h.onStart({
+                                    puzzle: d.puzzle,
+                                    hostProfile: d.hostProfile,
+                                    guestProfile: Storage.getProfile()
+                                });
+                            });
                         }
-                    });
-                } catch (e) {}
+                    } else if (this.roomTopic && topic === this.roomTopic) {
+                        this.handleRoomMessage(d);
+                    }
+                });
+            }, (errMsg) => {
+                this.disconnect();
+                this.h.onError(errMsg);
             });
         }
 
@@ -1071,141 +1027,161 @@
             this.disconnect();
             const rawCode = Math.random().toString(36).substring(2, 6).toUpperCase().padEnd(4, 'X');
             this.code = rawCode;
+            this.roomTopic = MQTT_ROOM_PREFIX + this.code;
             this.isHost = true;
             this.isPublic = false;
             this.status = 'WAITING';
 
-            if (window.Peer) {
-                this.peer = new window.Peer('sopa-match-' + this.code, PEER_CONFIG);
-                this.peer.on('open', () => {
-                    if (this.status === 'WAITING') this.h.onCreated(this.code);
-                });
-                this.peer.on('disconnected', () => {
-                    if (this.status === 'WAITING' && this.peer && !this.peer.destroyed) {
-                        try { this.peer.reconnect(); } catch (e) {}
-                    }
-                });
-                this.peer.on('connection', (c) => {
-                    if (this.conn && this.conn.open) {
-                        try { c.close(); } catch (e) {}
+            this.connectBroker((client) => {
+                if (this.status !== 'WAITING') return;
+                client.subscribe(this.roomTopic, { qos: 1 }, (err) => {
+                    if (err) {
+                        this.disconnect();
+                        this.h.onError('No se pudo crear la sala.');
                         return;
                     }
-                    this.conn = c;
-                    this.wire();
+                    this.h.onCreated(this.code);
                 });
-                this.peer.on('error', (err) => {
-                    if (err.type === 'unavailable-id') this.createRoom();
-                    else this.h.onError('No se pudo crear la sala. Revisa tu conexión a internet.');
+
+                client.on('message', (topic, payload) => {
+                    if (topic !== this.roomTopic) return;
+                    let d;
+                    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+                    if (!d || !d.type || d.from === this.myId) return;
+
+                    if (d.type === 'JOIN' && this.status === 'WAITING') {
+                        this.rivalId = d.from;
+                        this.rivalProfile = d.profile;
+                        this.send({ type: 'JOIN_ACK', to: d.from, profile: Storage.getProfile() });
+                        this.h.onJoined(d.profile);
+                    } else {
+                        this.handleRoomMessage(d);
+                    }
                 });
-            } else this.h.onError('Sin conexión para multijugador.');
+            }, (errMsg) => {
+                this.disconnect();
+                this.h.onError(errMsg);
+            });
         }
 
         joinRoom(code) {
             this.disconnect();
             this.code = code.trim().toUpperCase();
             if (!this.code) return;
+            this.roomTopic = MQTT_ROOM_PREFIX + this.code;
             this.isHost = false;
             this.isPublic = false;
             this.status = 'WAITING';
 
-            if (!window.Peer) {
-                this.h.onError('Sin conexión para multijugador.');
-                return;
-            }
-
             if (this.h.onJoining) this.h.onJoining(this.code);
 
-            this.peer = new window.Peer('sopa-guest-' + Date.now() + '-' + Math.floor(Math.random() * 999), PEER_CONFIG);
-
             this.joinTimeout = setTimeout(() => {
-                if (this.status === 'WAITING' && (!this.conn || !this.conn.open)) {
+                if (this.status === 'WAITING') {
                     this.disconnect();
-                    this.h.onError('No se pudo conectar a la sala ' + this.code + '. Verifica el código e intenta de nuevo.');
+                    this.h.onError('No se encontró la sala ' + this.code + ' o el anfitrión no responde.');
                 }
             }, 15000);
 
-            this.peer.on('open', () => {
+            this.connectBroker((client) => {
                 if (this.status !== 'WAITING') return;
-                this.conn = this.peer.connect('sopa-match-' + this.code, { reliable: true });
-                this.wire();
-            });
-            this.peer.on('error', (err) => {
-                clearTimeout(this.joinTimeout);
-                const msg = (err && err.type === 'peer-unavailable')
-                    ? 'No se encontró la sala ' + this.code + '. Verifica que el anfitrión siga dentro.'
-                    : 'Error de conexión al unirse a la sala.';
-                this.disconnect();
-                this.h.onError(msg);
-            });
-        }
+                let joinedAck = false;
 
-        wire() {
-            if (!this.conn) return;
-            const handleOpen = () => {
-                clearTimeout(this.joinTimeout);
-                if (!this.isPublic) {
-                    if (this.isHost) {
-                        this.h.onJoined();
-                    } else {
-                        this.send({ type: 'HELLO', profile: Storage.getProfile() });
-                        if (this.h.onGuestConnected) this.h.onGuestConnected();
+                client.subscribe(this.roomTopic, { qos: 1 }, (err) => {
+                    if (err) {
+                        this.disconnect();
+                        this.h.onError('Error al unirse a la sala.');
+                        return;
                     }
-                }
-            };
-            if (this.conn.open) handleOpen();
-            else this.conn.on('open', handleOpen);
+                    const sendJoin = () => {
+                        if (joinedAck || this.status !== 'WAITING') return;
+                        this.send({ type: 'JOIN', profile: Storage.getProfile() });
+                    };
+                    sendJoin();
+                    this.joinRetryTimer = setInterval(sendJoin, 2000);
+                });
 
-            this.conn.on('data', (d) => {
-                if (!d || !d.type) return;
-                if (d.type === 'HELLO') {
-                    this.rivalProfile = d.profile;
-                    this.h.onJoined(d.profile);
-                }
-                if (d.type === 'START') {
-                    this.status = 'PLAYING';
-                    this.rivalProfile = d.hostProfile;
-                    this.h.onStart(d);
-                }
-                if (d.type === 'WORD') this.h.onWord(d);
-                if (d.type === 'EMOJI') this.h.onEmoji(d.emoji);
-            });
-            this.conn.on('close', () => {
-                if (this.status !== 'IDLE') {
-                    this.h.onLeave();
-                }
-            });
-            this.conn.on('error', () => {
-                if (this.status === 'WAITING') {
-                    clearTimeout(this.joinTimeout);
-                    this.disconnect();
-                    this.h.onError('Se perdió la conexión con la sala.');
-                }
+                client.on('message', (topic, payload) => {
+                    if (topic !== this.roomTopic) return;
+                    let d;
+                    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+                    if (!d || !d.type || d.from === this.myId) return;
+
+                    if (d.type === 'JOIN_ACK' && (!d.to || d.to === this.myId)) {
+                        if (!joinedAck) {
+                            joinedAck = true;
+                            clearInterval(this.joinRetryTimer);
+                            clearTimeout(this.joinTimeout);
+                            this.rivalId = d.from;
+                            this.rivalProfile = d.profile;
+                            if (this.h.onGuestConnected) this.h.onGuestConnected();
+                        }
+                    } else {
+                        this.handleRoomMessage(d);
+                    }
+                });
+            }, (errMsg) => {
+                this.disconnect();
+                this.h.onError(errMsg);
             });
         }
 
-        send(msg) { if (this.conn && this.conn.open) this.conn.send(msg); }
+        handleRoomMessage(d) {
+            if (d.type === 'START' && !this.isHost) {
+                clearTimeout(this.joinTimeout);
+                clearInterval(this.joinRetryTimer);
+                this.status = 'PLAYING';
+                this.rivalProfile = d.hostProfile;
+                this.h.onStart(d);
+            } else if (d.type === 'WORD') {
+                this.h.onWord(d);
+            } else if (d.type === 'EMOJI') {
+                this.h.onEmoji(d.emoji);
+            } else if (d.type === 'LEAVE' && this.status === 'PLAYING') {
+                this.h.onLeave();
+            }
+        }
+
+        send(msg) {
+            if (this.client && this.client.connected && this.roomTopic) {
+                this.client.publish(this.roomTopic, JSON.stringify({ ...msg, from: this.myId }), { qos: 1 });
+            }
+        }
+
         startMatch(puzzle) {
             this.status = 'PLAYING';
             this.send({ type: 'START', puzzle, hostProfile: Storage.getProfile() });
             this.h.onStart({ puzzle, hostProfile: Storage.getProfile(), guestProfile: this.rivalProfile });
         }
-        sendWord(word, cells) { this.send({ type: 'WORD', word, cells }); }
+
+        sendWord(word, cells) {
+            this.send({ type: 'WORD', word, cells });
+        }
+
         disconnect() {
-            clearTimeout(this.scanTimeout);
+            clearInterval(this.seekTimer);
+            clearInterval(this.joinRetryTimer);
             clearTimeout(this.joinTimeout);
             clearTimeout(this.botOfferTimer);
-            clearTimeout(this.rescanTimer);
+            clearTimeout(this.connectTimeout);
+            this.seekTimer = null;
+            this.joinRetryTimer = null;
+
+            if (this.client && this.client.connected && this.roomTopic && this.status === 'PLAYING') {
+                try {
+                    this.client.publish(this.roomTopic, JSON.stringify({ type: 'LEAVE', from: this.myId }));
+                } catch (e) {}
+            }
+
             this.status = 'IDLE';
+            this.rivalId = null;
             this.rivalProfile = null;
-            if (this.conn) {
-                try { this.conn.off('close'); this.conn.close(); } catch (e) {}
-            }
-            if (this.peer) {
-                try { this.peer.destroy(); } catch (e) {}
-            }
-            this.conn = null;
-            this.peer = null;
+            this.roomTopic = null;
             this.code = null;
+
+            if (this.client) {
+                try { this.client.end(true); } catch (e) {}
+                this.client = null;
+            }
         }
     }
 
