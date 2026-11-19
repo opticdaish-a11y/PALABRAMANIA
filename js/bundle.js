@@ -1153,8 +1153,8 @@
             this.h.onStart({ puzzle, hostProfile: Storage.getProfile(), guestProfile: this.rivalProfile });
         }
 
-        sendWord(word, cells) {
-            this.send({ type: 'WORD', word, cells });
+        sendWord(word, cells, elapsedMs) {
+            this.send({ type: 'WORD', word, cells, elapsedMs });
         }
 
         disconnect() {
@@ -1436,6 +1436,20 @@
             window.addEventListener('focus', () => {
                 if (!document.hidden) sound.resumeFromBackground();
             });
+
+            // Bloquear zoom por pellizco (pinch), gestos y Ctrl+rueda para comportarse como app nativa
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 1) e.preventDefault();
+            }, { passive: false });
+            document.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 1) e.preventDefault();
+            }, { passive: false });
+            ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => {
+                document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+            });
+            window.addEventListener('wheel', (e) => {
+                if (e.ctrlKey) e.preventDefault();
+            }, { passive: false });
 
             // Regalo Diario
             document.getElementById('btn-close-gift-modal').onclick = () => document.getElementById('modal-daily-gift').classList.add('hidden');
@@ -2159,7 +2173,9 @@
             this.renderHubInfo();
             sound.playWordSuccess();
             const target = missing[Math.floor(Math.random() * missing.length)];
-            this.claim(target.word, target.cells, 'me');
+            const elapsedMs = Date.now() - (this.multiRoundStart || Date.now());
+            this.claim(target.word, target.cells, 'me', elapsedMs);
+            if (this.mode === 'multi') this.multiplayer.sendWord(target.word, target.cells, elapsedMs);
             this.checkGameOver();
         }
 
@@ -2214,16 +2230,36 @@
             dragLine.setAttribute('visibility', 'visible');
 
             document.querySelectorAll('.board-tile.is-selecting').forEach(t => t.classList.remove('is-selecting'));
+            let previewWord = '';
             this.selectedCells.forEach(c => {
                 const el = document.querySelector(`.board-tile[data-r="${c.r}"][data-c="${c.c}"]`);
                 if (el) el.classList.add('is-selecting');
+                if (this.puzzle && this.puzzle.grid[c.r]) previewWord += this.puzzle.grid[c.r][c.c];
             });
+
+            const preview = document.getElementById('live-word-preview');
+            if (preview && previewWord) {
+                const bwd = previewWord.split('').reverse().join('');
+                const isMatch = this.puzzle && ((this.puzzle.wordsToFind.includes(previewWord) && !this.found.has(previewWord)) || (this.puzzle.wordsToFind.includes(bwd) && !this.found.has(bwd)));
+                preview.textContent = previewWord;
+                preview.classList.remove('hidden', 'bg-slate-900/90', 'border-emerald-400', 'bg-emerald-500', 'border-white');
+                if (isMatch) {
+                    preview.classList.add('bg-emerald-500', 'border-white');
+                } else {
+                    preview.classList.add('bg-slate-900/90', 'border-emerald-400');
+                }
+            }
         }
 
         hideLiveDragLine() {
             const dragLine = document.getElementById('active-drag-line');
             if (dragLine) dragLine.setAttribute('visibility', 'hidden');
             document.querySelectorAll('.board-tile.is-selecting').forEach(t => t.classList.remove('is-selecting'));
+            const preview = document.getElementById('live-word-preview');
+            if (preview) {
+                preview.classList.add('hidden');
+                preview.textContent = '';
+            }
         }
 
         drawPermanentCapsule(cells, colorHex) {
@@ -2251,8 +2287,9 @@
 
             if (matched) {
                 sound.playWordSuccess();
-                this.claim(matched, this.selectedCells, 'me');
-                if (this.mode === 'multi') this.multiplayer.sendWord(matched, this.selectedCells);
+                const elapsedMs = Date.now() - (this.multiRoundStart || Date.now());
+                this.claim(matched, this.selectedCells, 'me', elapsedMs);
+                if (this.mode === 'multi') this.multiplayer.sendWord(matched, this.selectedCells, elapsedMs);
                 if (this.mode === 'blitz') {
                     this.seconds += 8;
                     this.blitzScore += 50;
@@ -2264,8 +2301,9 @@
             }
         }
 
-        claim(word, cells, who) {
-            this.found.set(word, { who, cells });
+        claim(word, cells, who, elapsedMs = null) {
+            const finalElapsed = elapsedMs !== null ? elapsedMs : (Date.now() - (this.multiRoundStart || Date.now()));
+            this.found.set(word, { who, cells, elapsedMs: finalElapsed });
             const color = who === 'me' ? PASTEL_CAPSULE_COLORS[this.colorIndex % PASTEL_CAPSULE_COLORS.length] : '#fbbf24';
             this.colorIndex++;
             this.drawPermanentCapsule(cells, color);
@@ -2273,6 +2311,7 @@
             const chip = document.getElementById('chip-' + word);
             if (chip) {
                 chip.textContent = word; // Revela si era modo misterio
+                chip.classList.remove('found-me', 'found-rival');
                 chip.classList.add(who === 'me' ? 'found-me' : 'found-rival');
             }
             if (this.mode === 'multi') this.updateMultiScore();
@@ -2362,6 +2401,8 @@
                         });
                     }, 350);
                 } else if (this.mode === 'multi') {
+                    if (this.multiGameEnded) return;
+                    this.multiGameEnded = true;
                     this.stopBot();
                     sound.playWordSuccess();
                     let my = 0, riv = 0;
@@ -2369,14 +2410,15 @@
                     const won = my > riv;
                     if (won) Storage.addScoreAndCoins(500, 250);
                     this.renderHubInfo();
+                    const rivalName = this.isBotMatch ? this.botName : (this.rivalDisplayName || 'tu rival');
                     setTimeout(() => {
                         const title = won ? '¡Victoria!' : (my === riv ? '¡Empate!' : 'Fin de Partida');
                         const icon = won ? '👑' : (my === riv ? '🤝' : '🥈');
                         const message = won
-                            ? `Ganaste ${my} - ${riv}\n+250 Monedas 🪙`
+                            ? `¡Ganaste! Tú ${my} - ${riv} ${rivalName}\n+250 Monedas 🪙`
                             : (my === riv
-                                ? `Empataron ${my} - ${riv}`
-                                : `Ganó ${this.isBotMatch ? this.botName : 'tu rival'} (${riv} - ${my})`);
+                                ? `Empate: Tú ${my} - ${riv} ${rivalName}`
+                                : `Ganó ${rivalName}: ${riv} - ${my}`);
                         this.showNotice({
                             icon,
                             title,
@@ -2495,6 +2537,8 @@
         startMultiGame(data) {
             this.stopBot();
             this.isBotMatch = false;
+            this.multiGameEnded = false;
+            this.multiRoundStart = Date.now();
             this.mode = 'multi';
             this.puzzle = data.puzzle;
             document.getElementById('game-hud-multi').classList.remove('hidden');
@@ -2503,16 +2547,26 @@
 
             const p = Storage.getProfile();
             const rivalProf = this.multiplayer.isHost ? data.guestProfile : data.hostProfile;
+            this.rivalDisplayName = (rivalProf && rivalProf.name) ? rivalProf.name : 'Rival';
             document.getElementById('hud-player-name').textContent = p.name;
-            document.getElementById('hud-rival-name').textContent = (rivalProf && rivalProf.name) ? rivalProf.name : 'Rival';
+            document.getElementById('hud-rival-name').textContent = this.rivalDisplayName;
             this.updateMultiScore();
             this.resetGameRound();
             this.nav('game');
         }
 
         onRivalWord(d) {
+            if (this.multiGameEnded) return;
+            const existing = this.found.get(d.word);
+            if (existing) {
+                if (existing.who === 'rival') return;
+                const rivalElapsed = typeof d.elapsedMs === 'number' ? d.elapsedMs : Infinity;
+                const myElapsed = typeof existing.elapsedMs === 'number' ? existing.elapsedMs : 0;
+                const rivalWasFirst = rivalElapsed < myElapsed || (rivalElapsed === myElapsed && !this.multiplayer.isHost);
+                if (!rivalWasFirst) return;
+            }
             sound.playSelect();
-            this.claim(d.word, d.cells, 'rival');
+            this.claim(d.word, d.cells, 'rival', d.elapsedMs);
             this.checkGameOver();
         }
 

@@ -20,6 +20,8 @@ html {
     height: 100%;
     margin: 0;
     padding: 0;
+    touch-action: pan-y;
+    overscroll-behavior: none;
 }
 
 body {
@@ -34,7 +36,8 @@ body {
     color: var(--text-dark);
     user-select: none;
     -webkit-user-select: none;
-    touch-action: manipulation;
+    touch-action: pan-y;
+    overscroll-behavior: none;
     margin: 0;
     padding: 0;
     padding-top: env(safe-area-inset-top, 0px);

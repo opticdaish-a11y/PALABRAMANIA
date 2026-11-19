@@ -1,6 +1,6 @@
 // sw.js - Service Worker (Network-First para recibir actualizaciones al instante y funcionar offline)
 
-const CACHE_NAME = 'palabramania-v9';
+const CACHE_NAME = 'palabramania-v12';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

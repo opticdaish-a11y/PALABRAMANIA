@@ -305,7 +305,8 @@
             </div>
 
             <!-- 2. ESCENARIO CENTRAL DEL TABLERO (EXPANSIÓN MÁXIMA) -->
-            <div id="board-stage" class="flex-1 flex items-center justify-center min-h-0 w-full">
+            <div id="board-stage" class="flex-1 flex items-center justify-center min-h-0 w-full relative">
+                <div id="live-word-preview" class="hidden pointer-events-none absolute top-1 left-1/2 -translate-x-1/2 z-20 px-4 py-1 rounded-full bg-slate-900/90 text-white border-2 border-emerald-400 shadow-xl font-game font-bold text-base tracking-widest whitespace-nowrap transition-colors"></div>
                 <div id="puzzle-board-wrap" class="puzzle-board-wrap">
                     <svg id="board-svg-overlay" class="board-svg-overlay" preserveAspectRatio="none"></svg>
                     <div id="puzzle-board" class="puzzle-grid-layer"></div>
