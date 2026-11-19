@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.github.opticdaish.palabramania",
+    "sha256_cert_fingerprints": ["8C:29:15:50:D5:44:C8:5C:C5:9D:89:76:DC:B7:93:10:31:53:6D:2A:43:B5:16:D3:5E:D6:12:11:D2:AC:CD:10"]
+  }
+}]
