@@ -118,8 +118,15 @@ jobs:
       - name: Compilar APK y AAB Firmados
         run: |
           cd /tmp/twa-build/android
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          SDK_MGR=$(which sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")
+          COMPILE_SDK=$(grep -oE 'compileSdk(Version)?\s*=?\s*[0-9]+' app/build.gradle | grep -oE '[0-9]+' | head -n 1 || echo "35")
+          echo "Detected compileSdk: $COMPILE_SDK"
+          yes | $SDK_MGR --licenses || true
+          $SDK_MGR "platforms;android-$COMPILE_SDK" "build-tools;${COMPILE_SDK}.0.0" || true
+
           chmod +x gradlew
-          ./gradlew assembleRelease bundleRelease \
+          ./gradlew assembleRelease bundleRelease --no-daemon \
             -Pandroid.injected.signing.store.file=/tmp/twa-build/palabramania.keystore \
             -Pandroid.injected.signing.store.password=PalabraMania2026! \
             -Pandroid.injected.signing.key.alias=palabramania \
