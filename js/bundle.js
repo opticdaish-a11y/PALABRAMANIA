@@ -842,6 +842,32 @@
     // 5. MULTIJUGADOR P2P (PÚBLICO SIN CLAVE + PRIVADO CON CLAVE)
     // ==========================================
     const PUBLIC_SLOTS = ['pm-pub-v2-1', 'pm-pub-v2-2', 'pm-pub-v2-3', 'pm-pub-v2-4', 'pm-pub-v2-5'];
+    const PEER_CONFIG = {
+        debug: 0,
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun.cloudflare.com:3478' },
+                {
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                }
+            ]
+        }
+    };
 
     class Multiplayer {
         constructor(handlers) {
@@ -854,7 +880,9 @@
             this.isPublic = false;
             this.rivalProfile = null;
             this.scanTimeout = null;
+            this.joinTimeout = null;
             this.botOfferTimer = null;
+            this.rescanTimer = null;
         }
 
         /**
@@ -871,10 +899,8 @@
             this.isPublic = true;
             this.h.onSearchStart();
 
-            const scanPeerId = `pm-scan-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
-            const scanPeer = new window.Peer(scanPeerId, {
-                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-            });
+            const scanPeerId = `pm-scan-${Date.now()}-${Math.floor(Math.random() * 99999)}`;
+            const scanPeer = new window.Peer(scanPeerId, PEER_CONFIG);
             this.peer = scanPeer;
 
             const unavailableSlots = new Set();
@@ -925,7 +951,7 @@
                     } catch (e) {}
                 });
 
-                // Si tras 2.2s nadie estaba esperando, abrir un slot público como anfitrión
+                // Esperar hasta 4.2s para dar tiempo a WebRTC/ICE en redes móviles
                 this.scanTimeout = setTimeout(() => {
                     if (matched || this.status !== 'SCANNING') return;
                     probeConns.forEach(c => { try { c.close(); } catch (e) {} });
@@ -933,7 +959,7 @@
 
                     const freeSlot = PUBLIC_SLOTS.find(s => unavailableSlots.has(s)) || PUBLIC_SLOTS[0];
                     this.hostPublicSlot(freeSlot, puzzleFactory);
-                }, 2200);
+                }, 4200);
             });
         }
 
@@ -943,27 +969,43 @@
             this.status = 'WAITING';
             this.isPublic = true;
 
-            const hostPeer = new window.Peer(slotId, {
-                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-            });
+            const hostPeer = new window.Peer(slotId, PEER_CONFIG);
             this.peer = hostPeer;
 
             hostPeer.on('open', () => {
+                if (this.status !== 'WAITING') return;
                 this.h.onSearchWaiting();
                 this.botOfferTimer = setTimeout(() => {
                     if (this.status === 'WAITING') this.h.onBotOfferReady();
-                }, 6000);
+                }, 8000);
+
+                // Si estamos en un slot > 0, revisar periódicamente si hay otro jugador esperando en un slot menor
+                const myIdx = PUBLIC_SLOTS.indexOf(slotId);
+                if (myIdx > 0) {
+                    this.rescanTimer = setTimeout(() => {
+                        if (this.status !== 'WAITING') return;
+                        this.tryJoinLowerSlot(myIdx, puzzleFactory);
+                    }, 3500);
+                }
+            });
+
+            hostPeer.on('disconnected', () => {
+                if (this.status === 'WAITING' && !hostPeer.destroyed) {
+                    try { hostPeer.reconnect(); } catch (e) {}
+                }
             });
 
             hostPeer.on('connection', (c) => {
-                c.on('open', () => {
+                const sendStatus = () => {
                     if (this.status !== 'WAITING') {
-                        c.send({ type: 'SLOT_STATUS', state: 'BUSY' });
+                        try { c.send({ type: 'SLOT_STATUS', state: 'BUSY' }); } catch (e) {}
                         setTimeout(() => { try { c.close(); } catch (e) {} }, 200);
                         return;
                     }
-                    c.send({ type: 'SLOT_STATUS', state: 'WAITING' });
-                });
+                    try { c.send({ type: 'SLOT_STATUS', state: 'WAITING' }); } catch (e) {}
+                };
+                if (c.open) sendStatus();
+                else c.on('open', sendStatus);
 
                 c.on('data', (d) => {
                     if (d && d.type === 'CLAIM_PUBLIC') {
@@ -971,13 +1013,13 @@
                             try { c.send({ type: 'SLOT_STATUS', state: 'BUSY' }); c.close(); } catch (e) {}
                             return;
                         }
-                        this.status = 'PLAYING';
                         clearTimeout(this.botOfferTimer);
+                        clearTimeout(this.rescanTimer);
+                        this.status = 'PLAYING';
                         this.conn = c;
                         this.rivalProfile = d.profile;
                         this.wire();
 
-                        // Iniciar partida inmediatamente para ambos
                         const puzzle = puzzleFactory();
                         this.startMatch(puzzle);
                     }
@@ -986,7 +1028,8 @@
 
             hostPeer.on('error', (err) => {
                 if (err.type === 'unavailable-id' && this.status === 'WAITING') {
-                    // Otro jugador tomó ese slot justo al mismo tiempo; probar siguiente
+                    clearTimeout(this.botOfferTimer);
+                    clearTimeout(this.rescanTimer);
                     const idx = PUBLIC_SLOTS.indexOf(slotId);
                     const nextSlot = PUBLIC_SLOTS[(idx + 1) % PUBLIC_SLOTS.length];
                     try { hostPeer.destroy(); } catch (e) {}
@@ -996,16 +1039,52 @@
             });
         }
 
+        tryJoinLowerSlot(myIdx, puzzleFactory) {
+            if (this.status !== 'WAITING' || !this.peer) return;
+            const lowerSlots = PUBLIC_SLOTS.slice(0, myIdx);
+            lowerSlots.forEach((targetSlot) => {
+                if (this.status !== 'WAITING') return;
+                try {
+                    const c = this.peer.connect(targetSlot, { reliable: true });
+                    c.on('data', (d) => {
+                        if (this.status !== 'WAITING') {
+                            try { c.close(); } catch (e) {}
+                            return;
+                        }
+                        if (d && d.type === 'SLOT_STATUS' && d.state === 'WAITING') {
+                            clearTimeout(this.botOfferTimer);
+                            clearTimeout(this.rescanTimer);
+                            this.status = 'PLAYING';
+                            this.isHost = false;
+                            this.conn = c;
+                            this.wire();
+                            c.send({ type: 'CLAIM_PUBLIC', profile: Storage.getProfile() });
+                        } else {
+                            try { c.close(); } catch (e) {}
+                        }
+                    });
+                } catch (e) {}
+            });
+        }
+
         createRoom() {
             this.disconnect();
-            this.code = Math.random().toString(36).substring(2, 6).toUpperCase();
+            const rawCode = Math.random().toString(36).substring(2, 6).toUpperCase().padEnd(4, 'X');
+            this.code = rawCode;
             this.isHost = true;
             this.isPublic = false;
             this.status = 'WAITING';
 
             if (window.Peer) {
-                this.peer = new window.Peer('sopa-match-' + this.code, { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
-                this.peer.on('open', () => this.h.onCreated(this.code));
+                this.peer = new window.Peer('sopa-match-' + this.code, PEER_CONFIG);
+                this.peer.on('open', () => {
+                    if (this.status === 'WAITING') this.h.onCreated(this.code);
+                });
+                this.peer.on('disconnected', () => {
+                    if (this.status === 'WAITING' && this.peer && !this.peer.destroyed) {
+                        try { this.peer.reconnect(); } catch (e) {}
+                    }
+                });
                 this.peer.on('connection', (c) => {
                     if (this.conn && this.conn.open) {
                         try { c.close(); } catch (e) {}
@@ -1016,7 +1095,7 @@
                 });
                 this.peer.on('error', (err) => {
                     if (err.type === 'unavailable-id') this.createRoom();
-                    else this.h.onError('Error creando sala');
+                    else this.h.onError('No se pudo crear la sala. Revisa tu conexión a internet.');
                 });
             } else this.h.onError('Sin conexión para multijugador.');
         }
@@ -1024,28 +1103,58 @@
         joinRoom(code) {
             this.disconnect();
             this.code = code.trim().toUpperCase();
+            if (!this.code) return;
             this.isHost = false;
             this.isPublic = false;
             this.status = 'WAITING';
 
-            if (window.Peer) {
-                this.peer = new window.Peer('sopa-guest-' + Date.now(), { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
-                this.peer.on('open', () => {
-                    this.conn = this.peer.connect('sopa-match-' + this.code, { reliable: true });
-                    this.wire();
-                });
-                this.peer.on('error', () => this.h.onError('No se encontró la sala o el código es incorrecto.'));
+            if (!window.Peer) {
+                this.h.onError('Sin conexión para multijugador.');
+                return;
             }
+
+            if (this.h.onJoining) this.h.onJoining(this.code);
+
+            this.peer = new window.Peer('sopa-guest-' + Date.now() + '-' + Math.floor(Math.random() * 999), PEER_CONFIG);
+
+            this.joinTimeout = setTimeout(() => {
+                if (this.status === 'WAITING' && (!this.conn || !this.conn.open)) {
+                    this.disconnect();
+                    this.h.onError('No se pudo conectar a la sala ' + this.code + '. Verifica el código e intenta de nuevo.');
+                }
+            }, 15000);
+
+            this.peer.on('open', () => {
+                if (this.status !== 'WAITING') return;
+                this.conn = this.peer.connect('sopa-match-' + this.code, { reliable: true });
+                this.wire();
+            });
+            this.peer.on('error', (err) => {
+                clearTimeout(this.joinTimeout);
+                const msg = (err && err.type === 'peer-unavailable')
+                    ? 'No se encontró la sala ' + this.code + '. Verifica que el anfitrión siga dentro.'
+                    : 'Error de conexión al unirse a la sala.';
+                this.disconnect();
+                this.h.onError(msg);
+            });
         }
 
         wire() {
             if (!this.conn) return;
-            this.conn.on('open', () => {
+            const handleOpen = () => {
+                clearTimeout(this.joinTimeout);
                 if (!this.isPublic) {
-                    if (this.isHost) this.h.onJoined();
-                    else this.send({ type: 'HELLO', profile: Storage.getProfile() });
+                    if (this.isHost) {
+                        this.h.onJoined();
+                    } else {
+                        this.send({ type: 'HELLO', profile: Storage.getProfile() });
+                        if (this.h.onGuestConnected) this.h.onGuestConnected();
+                    }
                 }
-            });
+            };
+            if (this.conn.open) handleOpen();
+            else this.conn.on('open', handleOpen);
+
             this.conn.on('data', (d) => {
                 if (!d || !d.type) return;
                 if (d.type === 'HELLO') {
@@ -1065,6 +1174,13 @@
                     this.h.onLeave();
                 }
             });
+            this.conn.on('error', () => {
+                if (this.status === 'WAITING') {
+                    clearTimeout(this.joinTimeout);
+                    this.disconnect();
+                    this.h.onError('Se perdió la conexión con la sala.');
+                }
+            });
         }
 
         send(msg) { if (this.conn && this.conn.open) this.conn.send(msg); }
@@ -1076,7 +1192,9 @@
         sendWord(word, cells) { this.send({ type: 'WORD', word, cells }); }
         disconnect() {
             clearTimeout(this.scanTimeout);
+            clearTimeout(this.joinTimeout);
             clearTimeout(this.botOfferTimer);
+            clearTimeout(this.rescanTimer);
             this.status = 'IDLE';
             this.rivalProfile = null;
             if (this.conn) {
@@ -1142,6 +1260,16 @@
                     const name = prof && prof.name ? prof.name : 'Rival';
                     document.getElementById('wait-status-msg').textContent = `¡${name} conectado! Listo para empezar.`;
                     document.getElementById('btn-launch-match').classList.remove('hidden');
+                },
+                onJoining: (code) => {
+                    document.getElementById('lobby-init').classList.add('hidden');
+                    document.getElementById('lobby-wait').classList.add('hidden');
+                    document.getElementById('lobby-searching').classList.remove('hidden');
+                    document.getElementById('btn-play-vs-bot').classList.add('hidden');
+                    document.getElementById('search-status-msg').textContent = `Conectando a la sala ${code}...`;
+                },
+                onGuestConnected: () => {
+                    document.getElementById('search-status-msg').textContent = '¡Conectado! Esperando a que el anfitrión inicie la partida...';
                 },
                 onStart: (d) => this.startMultiGame(d),
                 onWord: (d) => this.onRivalWord(d),
