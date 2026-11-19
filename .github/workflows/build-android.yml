@@ -101,7 +101,7 @@ jobs:
             isChromeOSOnly: false,
             isMetaQuest: false,
             fullScopeUrl: 'https://opticdaish-a11y.github.io/PALABRAMANIA/',
-            minSdkVersion: 21,
+            minSdkVersion: 24,
             orientation: 'portrait',
             fingerprints: [],
             appVersion: '1.0.0'
