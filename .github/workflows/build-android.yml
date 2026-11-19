@@ -31,7 +31,7 @@ jobs:
         run: |
           SDK_MGR=$(which sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")
           yes | $SDK_MGR --licenses || true
-          $SDK_MGR "platforms;android-34" "build-tools;34.0.0"
+          $SDK_MGR "platforms;android-34" "platforms;android-35" "build-tools;34.0.0" "build-tools;35.0.0"
 
       - name: Generar Keystore y AssetLinks SHA-256
         run: |
@@ -126,8 +126,10 @@ jobs:
             -Pandroid.injected.signing.key.password=PalabraMania2026!
 
           mkdir -p /tmp/twa-build/output
-          cp app/build/outputs/apk/release/*.apk /tmp/twa-build/output/PalabraMania-fullscreen.apk
-          cp app/build/outputs/bundle/release/*.aab /tmp/twa-build/output/PalabraMania-playstore.aab
+          APK_FILE=$(find app/build/outputs -name "*.apk" | head -n 1)
+          AAB_FILE=$(find app/build/outputs -name "*.aab" | head -n 1)
+          cp "$APK_FILE" /tmp/twa-build/output/PalabraMania-fullscreen.apk
+          cp "$AAB_FILE" /tmp/twa-build/output/PalabraMania-playstore.aab
           cp /tmp/twa-build/assetlinks.json /tmp/twa-build/output/assetlinks.json
           cp /tmp/twa-build/palabramania.keystore /tmp/twa-build/output/palabramania.keystore
 
