@@ -1,0 +1,451 @@
+/* css/styles.css - Diseño Casual Móvil Vibrante de Pantalla Completa */
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --green-btn-top: #5ce62e;
+    --green-btn-bot: #24b314;
+    --green-btn-shadow: #157a09;
+    --card-white: #ffffff;
+    --text-dark: #1e293b;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #1a332a;
+    background-image:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.22) 0%, rgba(15, 23, 42, 0.08) 45%, rgba(15, 23, 42, 0.45) 100%),
+        url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text-dark);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    margin: 0;
+    padding: 0;
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background-image 0.4s ease;
+}
+
+.font-game, h1, h2, h3 {
+    font-family: 'Fredoka', cursive, sans-serif;
+}
+
+/* =========================================
+   BOTONES 3D ESTILO ARCADE CASUAL
+   ========================================= */
+.btn-arcade-green {
+    background: linear-gradient(180deg, var(--green-btn-top) 0%, var(--green-btn-bot) 100%);
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 5px 0 var(--green-btn-shadow), 0 8px 20px rgba(0, 0, 0, 0.35);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+}
+
+.btn-arcade-green:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 var(--green-btn-shadow), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.btn-circle-green {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #5ce62e 0%, #22ad12 100%);
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 4px 0 #157a09, 0 6px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.btn-circle-green:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #157a09, 0 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+.btn-circle-green.lg {
+    width: 58px;
+    height: 58px;
+}
+
+.coins-pill {
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 9999px;
+    padding: 5px 12px 5px 14px;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+    cursor: pointer;
+}
+
+/* =========================================
+   CONTENEDOR PRINCIPAL FULL-WIDTH EN MÓVIL
+   ========================================= */
+.app-main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 4px 8px 6px 8px;
+}
+
+.app-main::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+/* =========================================
+   TARJETA DE PALABRAS + TABLERO GRANDE
+   ========================================= */
+.word-bank-card {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28);
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.word-bank-header {
+    background: linear-gradient(180deg, #4be024 0%, #24b314 100%);
+    color: #ffffff;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 6px 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.word-chip-casual {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    color: #0f172a;
+    transition: all 0.25s ease;
+}
+
+.word-chip-casual.found-me {
+    color: #94a3b8;
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.word-chip-casual.found-rival {
+    background: #fef3c7;
+    color: #b45309;
+    text-decoration: line-through;
+}
+
+/* Tablero Blanco Central Dimensionado Dinámicamente */
+.puzzle-board-wrap {
+    position: relative;
+    background: #ffffff;
+    border-radius: 1.4rem;
+    padding: 8px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.36), inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+    margin: auto;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.board-svg-overlay {
+    position: absolute;
+    inset: 8px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.puzzle-grid-layer {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    width: 100%;
+    height: 100%;
+    gap: 0;
+}
+
+.board-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    color: #0f172a;
+    cursor: pointer;
+    position: relative;
+    border-radius: 50%;
+    transition: color 0.12s ease, transform 0.1s ease;
+    line-height: 1;
+}
+
+.board-tile.is-selecting {
+    color: #ffffff !important;
+    transform: scale(1.08);
+}
+
+.board-tile.tile-hint-flash {
+    background-color: #3b82f6;
+    color: #ffffff !important;
+    animation: hintBounce 0.55s infinite alternate;
+    z-index: 5;
+}
+
+@keyframes hintBounce {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.75); }
+    100% { transform: scale(1.14); box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+
+/* =========================================
+   TARJETAS BLANCAS & ESPIRAL DE CALENDARIO
+   ========================================= */
+.casual-card {
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 1.4rem;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    color: #1e293b;
+}
+
+.avatar-frame-wood {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #fef3c7, #fde68a);
+    border: 5px solid #b45309;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35), inset 0 2px 5px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.2rem;
+    margin: -48px auto 10px auto;
+    position: relative;
+}
+
+/* Tarjeta Calendario del Desafío Diario */
+.calendar-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 16px 35px rgba(0, 0, 0, 0.35);
+    position: relative;
+    overflow: visible;
+    margin-top: 14px;
+}
+
+.calendar-header-red {
+    background: linear-gradient(180deg, #f87171 0%, #dc2626 100%);
+    color: #ffffff;
+    border-radius: 1.5rem 1.5rem 0 0;
+    padding: 18px 16px 12px 16px;
+    text-align: center;
+    position: relative;
+}
+
+.calendar-rings {
+    position: absolute;
+    top: -11px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-evenly;
+    padding: 0 18px;
+}
+
+.calendar-ring {
+    width: 11px;
+    height: 24px;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    border-radius: 9999px;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.calendar-date-ribbon {
+    background: #60a5fa;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.78rem;
+    padding: 3px 16px;
+    border-radius: 0 0 12px 12px;
+    display: inline-block;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+}
+
+/* =========================================
+   BARRA DE NAVEGACIÓN INFERIOR (BOTTOM DOCK)
+   ========================================= */
+.bottom-nav-dock {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.98) 100%);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    height: 70px;
+    width: 100%;
+    z-index: 40;
+    flex-shrink: 0;
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    padding: 4px 2px;
+}
+
+.bottom-nav-item .nav-icon {
+    font-size: 1.55rem;
+    line-height: 1.15;
+    margin-bottom: 2px;
+    transition: transform 0.2s ease;
+}
+
+.bottom-nav-item.active {
+    background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+    color: #ffffff;
+    border-radius: 0.85rem 0.85rem 0 0;
+    margin-top: -7px;
+    box-shadow: 0 -4px 16px rgba(245, 158, 11, 0.45);
+}
+
+.bottom-nav-item.active .nav-icon {
+    transform: scale(1.1);
+}
+
+/* =========================================
+   AVENTURA, ÁLBUM Y REGALO DIARIO
+   ========================================= */
+.level-card-casual {
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 1.15rem;
+    padding: 13px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s ease;
+}
+
+.level-card-casual.unlocked { cursor: pointer; }
+.level-card-casual.unlocked:active { transform: scale(0.98); }
+.level-card-casual.locked { opacity: 0.65; cursor: not-allowed; }
+
+.album-card-casual {
+    background: #ffffff;
+    border-radius: 1.15rem;
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.album-card-casual.unlocked:active { transform: scale(0.97); }
+.album-card-casual.locked { opacity: 0.8; cursor: default; }
+
+.album-card-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #e2e8f0;
+}
+
+.album-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.album-lock-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.72);
+    font-size: 1.8rem;
+}
+
+.gift-box-btn {
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+.gift-box-btn:hover {
+    transform: scale(1.1) rotate(-3deg);
+}
+.gift-box-btn:active {
+    transform: scale(0.94);
+}
+
+/* Cost badge debajo/sobre botones circulares */
+.cost-tag {
+    position: absolute;
+    bottom: -6px;
+    background: rgba(15, 23, 42, 0.9);
+    color: #fde047;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+}
+
+@keyframes floatEmojiAnim {
+    0% { opacity: 0; transform: translateY(20px) scale(0.5); }
+    20% { opacity: 1; transform: translateY(0) scale(1.3); }
+    80% { opacity: 1; transform: translateY(-70px) scale(1.1); }
+    100% { opacity: 0; transform: translateY(-110px) scale(0.7); }
+}
+
+.floating-emoji {
+    position: fixed;
+    font-size: 3.5rem;
+    pointer-events: none;
+    z-index: 100;
+    animation: floatEmojiAnim 2s ease-out forwards;
+}

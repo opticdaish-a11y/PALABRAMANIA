@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="50%" stop-color="#3730a3" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Fondo redondeado estilo App Icon moderno -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)" />
+
+  <!-- Cuadrícula estilizada de sopa de letras en el fondo -->
+  <g opacity="0.15" fill="#ffffff" font-family="sans-serif" font-weight="900" font-size="38" text-anchor="middle">
+    <text x="120" y="110">A</text><text x="200" y="110">S</text><text x="280" y="110">O</text><text x="360" y="110">P</text><text x="440" y="110">A</text>
+    <text x="120" y="170">M</text><text x="200" y="170">U</text><text x="280" y="170">L</text><text x="360" y="170">T</text><text x="440" y="170">I</text>
+    <text x="120" y="380">W</text><text x="200" y="380">O</text><text x="280" y="380">R</text><text x="360" y="380">D</text><text x="440" y="380">S</text>
+    <text x="120" y="440">G</text><text x="200" y="440">A</text><text x="280" y="440">M</text><text x="360" y="440">E</text><text x="440" y="440">S</text>
+  </g>
+
+  <!-- Cápsula de palabra encontrada central -->
+  <rect x="76" y="216" width="360" height="96" rx="48" fill="url(#neonGlow)" filter="url(#glow)" />
+  <rect x="80" y="220" width="352" height="88" rx="44" fill="#0f172a" />
+
+  <!-- Letras destacadas "S O P A" -->
+  <g fill="url(#neonGlow)" font-family="Impact, sans-serif" font-weight="900" font-size="62" text-anchor="middle">
+    <text x="140" y="286">S</text>
+    <text x="220" y="286">O</text>
+    <text x="300" y="286">P</text>
+    <text x="380" y="286">A</text>
+  </g>
+
+  <!-- Detalle brillante de victoria -->
+  <circle cx="430" cy="95" r="22" fill="#fbbf24" />
+  <polygon points="430,65 436,87 458,95 436,103 430,125 424,103 402,95 424,87" fill="#ffffff" />
+</svg>
